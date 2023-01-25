@@ -3,4 +3,5 @@ project(VideoProcessing)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(VideoProcessing main.cpp)
+add_subdirectory(ThirdParty)
+add_subdirectory(ProVid)
