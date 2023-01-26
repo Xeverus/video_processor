@@ -20,6 +20,7 @@ target_link_directories(${PROJECT_NAME}
         )
 
 target_link_libraries(${PROJECT_NAME}
+        PRIVATE "opengl32"
         PRIVATE "glfw3"
         PRIVATE "opencv_core440d"
         PRIVATE "opencv_videoio440d"
