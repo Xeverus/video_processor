@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.23)
 
-project("glfw")
-
 include(ExternalProject)
 
 ExternalProject_Add(

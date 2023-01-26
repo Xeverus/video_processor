@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.23)
 
-project("opencv")
-
 include(ExternalProject)
 
 ExternalProject_Add(
@@ -40,3 +38,4 @@ ExternalProject_Add(
             -DWITH_IMGCODEC_PFM=OFF
         TEST_COMMAND ""
 )
+set_property(TARGET "opencv" PROPERTY CXX_STANDARD ${CMAKE_CXX_STANDARD})
