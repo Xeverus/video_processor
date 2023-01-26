@@ -21,6 +21,6 @@ target_link_directories(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
         PRIVATE "glfw3"
-        PRIVATE "opencv_core470d"
-        PRIVATE "opencv_videoio470d"
+        PRIVATE "opencv_core440d"
+        PRIVATE "opencv_videoio440d"
         )
