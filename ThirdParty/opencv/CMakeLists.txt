@@ -9,7 +9,6 @@ ExternalProject_Add(
         SOURCE_DIR "${CMAKE_SOURCE_DIR}/ThirdParty/opencv/opencv/"
         BINARY_DIR "${CMAKE_BINARY_DIR}/ThirdParty/opencv/bin/"
         CMAKE_ARGS
-            -DBUILD_SHARED_LIBS=OFF
             -DBUILD_JAVA=OFF
             -DBUILD_FAT_JAVA_LIB=OFF
             -DBUILD_opencv_python2=OFF
@@ -41,4 +40,3 @@ ExternalProject_Add(
             -DWITH_IMGCODEC_PFM=OFF
         TEST_COMMAND ""
 )
-set_property(TARGET "glfw" PROPERTY CXX_STANDARD ${CMAKE_CXX_STANDARD})

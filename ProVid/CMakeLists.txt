@@ -16,8 +16,11 @@ target_include_directories(${PROJECT_NAME}
 
 target_link_directories(${PROJECT_NAME}
         PRIVATE ${CMAKE_BINARY_DIR}/install/glfw/lib
+        PRIVATE ${CMAKE_BINARY_DIR}/install/opencv/x64/mingw/lib
         )
 
 target_link_libraries(${PROJECT_NAME}
         PRIVATE "glfw3"
+        PRIVATE "opencv_core470d"
+        PRIVATE "opencv_videoio470d"
         )
