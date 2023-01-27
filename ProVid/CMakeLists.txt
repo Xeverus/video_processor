@@ -3,7 +3,14 @@ cmake_minimum_required(VERSION 3.23)
 set(PROJECT_NAME "ProVid")
 project(${PROJECT_NAME})
 
-add_executable(ProVid main.cpp File/File.cpp File/File.h)
+add_executable(ProVid
+        main.cpp
+        Filesystem/BinaryFile.cpp
+        Filesystem/BinaryFile.h
+        Video/VideoReader.cpp
+        Video/VideoReader.h
+        Video/VideoWriter.cpp
+        Video/VideoWriter.h)
 
 add_dependencies(${PROJECT_NAME}
         "glad"

@@ -1,11 +1,11 @@
-#include "File.h"
+#include "BinaryFile.h"
 
 #include <fstream>
 
-namespace provid::file
+namespace provid::filesystem
 {
 
-std::vector<char> File::ReadWholeBinaryFile(const std::string& filepath)
+std::vector<char> BinaryFile::ReadWhole(const std::string& filepath)
 {
     std::ifstream file(filepath, std::ios::binary | std::ios::ate);
     if (!file.is_open())

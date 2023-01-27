@@ -6,7 +6,9 @@
 #include <glfw/glfw3.h>
 #include <opencv2/videoio.hpp>
 
-#include "File/File.h"
+#include "Filesystem/BinaryFile.h"
+#include "Video/VideoReader.h"
+#include "Video/VideoWriter.h"
 
 GLuint CompileShader(GLenum shader_type, const std::vector<char>& shader_code)
 {
@@ -56,7 +58,9 @@ GLuint MakeProgram(const std::vector<GLuint>& shaders)
     return program_id;
 }
 
-void GLAPIENTRY glDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
+void GLAPIENTRY
+glDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message,
+              const void* userParam)
 {
     std::cout << message << std::endl;
 }
@@ -85,11 +89,11 @@ int main()
     glDebugMessageCallback(glDebugOutput, nullptr);
     glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 
-    const auto vs_shader_code = provid::file::File::ReadWholeBinaryFile(
+    const auto vs_shader_code = provid::filesystem::BinaryFile::ReadWhole(
         "../../Assets/Shaders/full_screen_quad.vs");
     const auto vs_shader_id = CompileShader(GL_VERTEX_SHADER, vs_shader_code);
 
-    const auto fs_shader_code = provid::file::File::ReadWholeBinaryFile(
+    const auto fs_shader_code = provid::filesystem::BinaryFile::ReadWhole(
         "../../Assets/Shaders/full_screen_quad_textured_with_filter.fs");
     const auto fs_shader_id = CompileShader(GL_FRAGMENT_SHADER, fs_shader_code);
 
@@ -138,26 +142,19 @@ int main()
     const auto video_path =
         //"../../Assets/Movies/original.MOV";
         "../../Assets/Movies/modified.MP4";
-    cv::VideoCapture original(video_path);
-    std::cout << original.get(cv::CAP_PROP_ORIENTATION_AUTO) << ' ' << original.get(cv::CAP_PROP_FRAME_WIDTH) << ' ' << original.get(cv::CAP_PROP_FRAME_HEIGHT) << std::endl;
+    provid::video::VideoReader video(video_path);
 
-    cv::Mat image;
-    original >> image;
+    glfwSetWindowSize(window, video.GetFrameWidth(), video.GetFrameHeight());
+    glViewport(0, 0, video.GetFrameWidth(), video.GetFrameHeight());
 
-    glfwSetWindowSize(window, image.cols, image.rows);
-    glViewport(0, 0, image.cols, image.rows);
+    provid::video::VideoWriter new_movie("../../Assets/Movies/new_movie.mp4", video.GetFrameWidth(),
+                                         video.GetFrameHeight(),
+                                         video.GetFramesPerSecond());
 
-    const auto fourcc = cv::VideoWriter::fourcc('m', 'p', '4', 'v');
-    const auto fps = original.get(cv::CAP_PROP_FPS);
-    cv::VideoWriter new_movie("../../Assets/Movies/new_movie.mp4",
-                              fourcc,
-                              fps,
-                              cv::Size(image.cols, image.rows));
-
-    auto b = 1;
     auto frames_to_convert = 300;
     while (!glfwWindowShouldClose(window))
     {
+        auto image = video.GetNextFrame();
         if (!image.empty() && frames_to_convert > 0)
         {
             glActiveTexture(GL_TEXTURE0 + 0);
@@ -179,7 +176,7 @@ int main()
 
             cv::Mat output_image(image.rows, image.cols, image.type());
             glReadPixels(0, 0, image.cols, image.rows, GL_BGR, GL_UNSIGNED_BYTE, output_image.data);
-            new_movie.write(output_image);
+            new_movie.WriteFrame(output_image);
 
             glfwSwapBuffers(window);
             --frames_to_convert;
@@ -189,7 +186,6 @@ int main()
             glfwSetWindowShouldClose(window, GLFW_TRUE);
         }
 
-        original >> image;
         glfwPollEvents();
     }
 
