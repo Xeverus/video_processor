@@ -1,8 +1,6 @@
 #include "ShaderLab.h"
 
-#include <array>
 #include <iostream>
-#include <sstream>
 
 #include <glad/gl.h>
 #include <glfw/glfw3.h>
@@ -70,6 +68,77 @@ glDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei le
     std::cout << message << std::endl;
 }
 
+float saturation = -0.15f;
+float exposure = 0.05f;
+float contrast = 0.15f;
+float brightness = -0.1f;
+float tint[3] = {1.0f, 1.0f, 1.0f};
+bool up = false;
+
+void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (key == GLFW_KEY_LEFT_SHIFT)
+    {
+        up = action != GLFW_PRESS;
+        return;
+    }
+
+    if (action != GLFW_PRESS)
+    {
+        return;
+    }
+
+    const auto step = 0.05f;
+    switch (key)
+    {
+        case GLFW_KEY_B:
+            brightness += up ? step : -step;
+            break;
+        case GLFW_KEY_S:
+            saturation += up ? step : -step;
+            break;
+        case GLFW_KEY_E:
+            exposure += up ? step : -step;
+            break;
+        case GLFW_KEY_C:
+            contrast += up ? step : -step;
+            break;
+        case GLFW_KEY_1:
+            if (up) {
+                tint[0] += 0.01;
+                tint[2] += 0.01;
+            } else {
+                tint[0] -= 0.01;
+                tint[2] -= 0.01;
+            }
+            break;
+        case GLFW_KEY_2:
+            if (up) {
+                tint[1] += 0.01;
+            } else {
+                tint[1] -= 0.01;
+            }
+            break;
+        case GLFW_KEY_R:
+            brightness = 0.0f;
+            saturation = 0.0f;
+            exposure = 0.0f;
+            contrast = 0.0f;
+            tint[0] = 1.0f;
+            tint[1] = 1.0f;
+            tint[2] = 1.0f;
+            break;
+    }
+
+    std::cout
+        << "; s=" << saturation
+        << "; e=" << exposure
+        << "; c=" << contrast
+        << "; b=" << brightness
+        << "; t=" << tint[0] << ',' << tint[1] << ',' << tint[2]
+        << std::endl;
+}
+
 void main()
 {
     glfwInit();
@@ -80,6 +149,7 @@ void main()
 
     const auto window = glfwCreateWindow(1920, 1024, "ProVid", nullptr, nullptr);
     glfwMakeContextCurrent(window);
+    glfwSetKeyCallback(window, KeyCallback);
 
     int version = gladLoadGL(glfwGetProcAddress);
     if (version == 0)
@@ -110,117 +180,47 @@ void main()
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
-    ///// !!! not needed
-    GLuint vbo;
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexBuffer(0, vbo, 0, 0);
-    ///// !!! not needed
-
     glUseProgram(screen_quad_program_id);
-
-    ///// render to texture
-    /*GLuint framebuffer = 0;
-    glGenFramebuffers(1, &framebuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-    GLuint render_texture;
-    glGenTextures(1, &render_texture);
-    glBindTexture(GL_TEXTURE_2D, render_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1024, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, render_texture, 0);
-    GLenum draw_buffers[1] = {GL_COLOR_ATTACHMENT0};
-    glDrawBuffers(1, draw_buffers);
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    {
-       throw std::runtime_error("Failed to use off-screen frame buffer");
-    }*/
-    ///// !!! render to texture
 
     GLuint texture_id = 0;
     glGenTextures(1, &texture_id);
 
-    const auto video_path =
-        "../../Assets/Movies/original.MOV";
-    //"../../Assets/Movies/modified.MP4";
+    const auto video_path = "../../Assets/Movies/original.MOV";
     provid::video::VideoReader video(video_path);
 
-    const auto old_width = video.GetFrameWidth();
-    const auto old_height = video.GetFrameHeight();
-    const auto new_width = 480;
-    const auto new_height = 640;
-    const auto new_fps = video.GetFramesPerSecond();
+    glfwSetWindowSize(window, video.GetFrameWidth(), video.GetFrameHeight());
+    glViewport(0, 0, video.GetFrameWidth(), video.GetFrameHeight());
 
-    auto CalculateAspectRatio = [old_width, old_height, new_width, new_height]()
-    {
-        const auto ow = static_cast<float>(old_width);
-        const auto oh = static_cast<float>(old_height);
-        const auto nw = static_cast<float>(new_width);
-        const auto nh = static_cast<float>(new_height);
+    const auto image = video.GetNextFrame();
 
-        return (oh / nh) / (ow / nw);
-    };
-
-    const auto aspect_x = 1.0f;
-    const auto aspect_y = CalculateAspectRatio();
-
-    glfwSetWindowSize(window, new_width, new_height);
-    glViewport(0, 0, new_width, new_height);
-
-    provid::video::VideoWriter new_movie("../../Assets/Movies/changed.mp4", new_width, new_height, new_fps);
-
-    auto frames_to_convert = 300;
     while (!glfwWindowShouldClose(window))
     {
-        auto image = video.GetNextFrame();
-        if (!image.empty() && frames_to_convert > 0)
-        {
-            glActiveTexture(GL_TEXTURE0 + 0);
-            glBindTexture(GL_TEXTURE_2D, texture_id);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, video.GetFrameWidth(), video.GetFrameHeight(), 0, GL_BGR,
-                         GL_UNSIGNED_BYTE, image.data);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glActiveTexture(GL_TEXTURE0 + 0);
+        glBindTexture(GL_TEXTURE_2D, texture_id);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, video.GetFrameWidth(), video.GetFrameHeight(), 0, GL_BGR,
+                     GL_UNSIGNED_BYTE, image.data);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-            glUniform2f(glGetUniformLocation(screen_quad_program_id, "uAspectRatio"), aspect_x, aspect_y);
+        glUniform2f(glGetUniformLocation(screen_quad_program_id, "uAspectRatio"), 1.0f, 1.0f);
 
-            glUniform1i(glGetUniformLocation(screen_quad_program_id, "uImage"), 0);
-            glUniform1f(glGetUniformLocation(screen_quad_program_id, "uBrightness"), 0.24f);
-            glUniform1f(glGetUniformLocation(screen_quad_program_id, "uContrast"), -0.4f);
-            glUniform1f(glGetUniformLocation(screen_quad_program_id, "uExposure"), 0.0f);
-            glUniform1f(glGetUniformLocation(screen_quad_program_id, "uSaturation"), 0.0f);
+        glUniform1i(glGetUniformLocation(screen_quad_program_id, "uImage"), 0);
+        glUniform1f(glGetUniformLocation(screen_quad_program_id, "uBrightness"), brightness);
+        glUniform1f(glGetUniformLocation(screen_quad_program_id, "uContrast"), contrast);
+        glUniform1f(glGetUniformLocation(screen_quad_program_id, "uExposure"), exposure);
+        glUniform1f(glGetUniformLocation(screen_quad_program_id, "uSaturation"), saturation);
+        glUniform3f(glGetUniformLocation(screen_quad_program_id, "uTint"), tint[0], tint[1], tint[2]);
 
-            ///
-            //glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-            //glViewport(0, 0, 1920, 1024);
-            ///
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-            cv::Mat output_image(new_height, new_width, image.type());
-            glReadPixels(0, 0, new_width, new_height, GL_BGR, GL_UNSIGNED_BYTE, output_image.data);
-            new_movie.WriteFrame(output_image);
-
-            glfwSwapBuffers(window);
-            --frames_to_convert;
-        }
-        else
-        {
-            glfwSetWindowShouldClose(window, GLFW_TRUE);
-        }
+        glfwSwapBuffers(window);
 
         glfwPollEvents();
     }
 
     glfwTerminate();
-
-    return;
 }
 
 }

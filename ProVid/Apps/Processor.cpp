@@ -70,6 +70,12 @@ glDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei le
     std::cout << message << std::endl;
 }
 
+float saturation = -0.15f;
+float exposure = 0.05f;
+float contrast = 0.15f;
+float brightness = -0.1f;
+float tint[3] = {1.0f, 1.0f, 1.0f};
+
 void main()
 {
     glfwInit();
@@ -191,10 +197,11 @@ void main()
             glUniform2f(glGetUniformLocation(screen_quad_program_id, "uAspectRatio"), aspect_x, aspect_y);
 
             glUniform1i(glGetUniformLocation(screen_quad_program_id, "uImage"), 0);
-            glUniform1f(glGetUniformLocation(screen_quad_program_id, "uBrightness"), 0.0f);
-            glUniform1f(glGetUniformLocation(screen_quad_program_id, "uContrast"), 0.0f);
-            glUniform1f(glGetUniformLocation(screen_quad_program_id, "uExposure"), 0.0f);
-            glUniform1f(glGetUniformLocation(screen_quad_program_id, "uSaturation"), 0.0f);
+            glUniform1f(glGetUniformLocation(screen_quad_program_id, "uSaturation"), saturation);
+            glUniform1f(glGetUniformLocation(screen_quad_program_id, "uExposure"), exposure);
+            glUniform1f(glGetUniformLocation(screen_quad_program_id, "uContrast"), contrast);
+            glUniform1f(glGetUniformLocation(screen_quad_program_id, "uBrightness"), brightness);
+            glUniform3f(glGetUniformLocation(screen_quad_program_id, "uTint"), tint[0], tint[1], tint[2]);
 
             ///
             //glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);

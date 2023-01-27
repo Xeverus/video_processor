@@ -3,8 +3,8 @@
 
 int main()
 {
-    Processor::run();
-    //ShaderLab::run();
+    //Processor::run();
+    ShaderLab::run();
 
     return 0;
 }

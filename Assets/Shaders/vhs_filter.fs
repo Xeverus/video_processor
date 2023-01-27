@@ -6,6 +6,7 @@ uniform float uBrightness;
 uniform float uContrast;
 uniform float uExposure;
 uniform float uSaturation;
+uniform vec3 uTint;
 
 in vec2 textureCoords;
 
@@ -61,17 +62,19 @@ vec3 adjustSaturation(vec3 color, float saturation)
 void main()
 {
     vec2 imageTexelSize = 1.0 / textureSize(uImage, 0);
-    vec2 channelOffset = vec2(0.0, imageTexelSize.y * 4.0f);
+    vec2 channelOffset = vec2(0.0, imageTexelSize.y * 2.0f);
 
     vec3 color = vec3(0, 0, 0);
     color.x = makeBlur(textureCoords - channelOffset, imageTexelSize).x;
     color.y = makeBlur(textureCoords, imageTexelSize).y;
     color.z = makeBlur(textureCoords + channelOffset, imageTexelSize).z;
 
-    color = adjustContrast(color, uContrast);
     color = adjustSaturation(color, uSaturation);
     color = adjustExposure(color, uExposure);
+    color = adjustContrast(color, uContrast);
     color = adjustBrightness(color, uBrightness);
+
+    color *= uTint;
 
     outColor = color;
 }
