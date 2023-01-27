@@ -5,7 +5,7 @@
 namespace provid::video
 {
 
-VideoWriter::VideoWriter(const std::string& filepath, int width, int height, int fps)
+VideoWriter::VideoWriter(const std::string& filepath, int width, int height, double fps)
     : video_writer_(filepath,
                     cv::VideoWriter::fourcc('m', 'p', '4', 'v'),
                     fps,

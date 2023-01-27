@@ -17,7 +17,7 @@ public:
     int GetFrameWidth() const;
     int GetFrameHeight() const;
     int GetFrameCount() const;
-    int GetFramesPerSecond() const;
+    double GetFramesPerSecond() const;
 
     const cv::Mat& GetNextFrame();
 

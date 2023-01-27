@@ -90,11 +90,11 @@ int main()
     glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 
     const auto vs_shader_code = provid::filesystem::BinaryFile::ReadWhole(
-        "../../Assets/Shaders/full_screen_quad.vs");
+        "../../Assets/Shaders/vhs_filter.vs");
     const auto vs_shader_id = CompileShader(GL_VERTEX_SHADER, vs_shader_code);
 
     const auto fs_shader_code = provid::filesystem::BinaryFile::ReadWhole(
-        "../../Assets/Shaders/full_screen_quad_textured_with_filter.fs");
+        "../../Assets/Shaders/vhs_filter.fs");
     const auto fs_shader_id = CompileShader(GL_FRAGMENT_SHADER, fs_shader_code);
 
     const auto screen_quad_program_id = MakeProgram({vs_shader_id, fs_shader_id});
@@ -144,9 +144,24 @@ int main()
         //"../../Assets/Movies/modified.MP4";
     provid::video::VideoReader video(video_path);
 
+    const auto old_width = video.GetFrameWidth();
+    const auto old_height = video.GetFrameHeight();
     const auto new_width = 480;
     const auto new_height = 640;
     const auto new_fps = video.GetFramesPerSecond();
+
+    auto CalculateAspectRatio = [old_width, old_height, new_width, new_height]()
+    {
+        const auto ow = static_cast<float>(old_width);
+        const auto oh = static_cast<float>(old_height);
+        const auto nw = static_cast<float>(new_width);
+        const auto nh = static_cast<float>(new_height);
+
+        return (oh / nh) / (ow / nw);
+    };
+
+    const auto aspect_x = 1.0f;
+    const auto aspect_y = CalculateAspectRatio();
 
     glfwSetWindowSize(window, new_width, new_height);
     glViewport(0, 0, new_width, new_height);
@@ -169,6 +184,7 @@ int main()
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
             glUniform1i(glGetUniformLocation(screen_quad_program_id, "image"), 0);
+            glUniform2f(glGetUniformLocation(screen_quad_program_id, "aspectRatio"), aspect_x, aspect_y);
 
             ///
             //glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);

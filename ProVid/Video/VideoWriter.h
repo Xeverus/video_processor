@@ -12,7 +12,7 @@ namespace provid::video
 class VideoWriter
 {
 public:
-    VideoWriter(const std::string& filepath, int width, int height, int fps);
+    VideoWriter(const std::string& filepath, int width, int height, double fps);
 
     void WriteFrame(const cv::Mat& frame);
 

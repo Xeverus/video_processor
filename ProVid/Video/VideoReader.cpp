@@ -46,9 +46,9 @@ int VideoReader::GetFrameCount() const
     return static_cast<int>(video_capture_.get(cv::CAP_PROP_FRAME_COUNT));
 }
 
-int VideoReader::GetFramesPerSecond() const
+double VideoReader::GetFramesPerSecond() const
 {
-    return static_cast<int>(video_capture_.get(cv::CAP_PROP_FPS));
+    return video_capture_.get(cv::CAP_PROP_FPS);
 }
 
 }
