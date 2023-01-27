@@ -140,16 +140,18 @@ int main()
     glGenTextures(1, &texture_id);
 
     const auto video_path =
-        //"../../Assets/Movies/original.MOV";
-        "../../Assets/Movies/modified.MP4";
+        "../../Assets/Movies/original.MOV";
+        //"../../Assets/Movies/modified.MP4";
     provid::video::VideoReader video(video_path);
 
-    glfwSetWindowSize(window, video.GetFrameWidth(), video.GetFrameHeight());
-    glViewport(0, 0, video.GetFrameWidth(), video.GetFrameHeight());
+    const auto new_width = 480;
+    const auto new_height = 640;
+    const auto new_fps = video.GetFramesPerSecond();
 
-    provid::video::VideoWriter new_movie("../../Assets/Movies/new_movie.mp4", video.GetFrameWidth(),
-                                         video.GetFrameHeight(),
-                                         video.GetFramesPerSecond());
+    glfwSetWindowSize(window, new_width, new_height);
+    glViewport(0, 0, new_width, new_height);
+
+    provid::video::VideoWriter new_movie("../../Assets/Movies/new_movie.mp4", new_width, new_height, new_fps);
 
     auto frames_to_convert = 300;
     while (!glfwWindowShouldClose(window))
@@ -159,7 +161,8 @@ int main()
         {
             glActiveTexture(GL_TEXTURE0 + 0);
             glBindTexture(GL_TEXTURE_2D, texture_id);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.cols, image.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, image.data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, video.GetFrameWidth(), video.GetFrameHeight(), 0, GL_BGR,
+                         GL_UNSIGNED_BYTE, image.data);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -174,8 +177,8 @@ int main()
 
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-            cv::Mat output_image(image.rows, image.cols, image.type());
-            glReadPixels(0, 0, image.cols, image.rows, GL_BGR, GL_UNSIGNED_BYTE, output_image.data);
+            cv::Mat output_image(new_height, new_width, image.type());
+            glReadPixels(0, 0, new_width, new_height, GL_BGR, GL_UNSIGNED_BYTE, output_image.data);
             new_movie.WriteFrame(output_image);
 
             glfwSwapBuffers(window);

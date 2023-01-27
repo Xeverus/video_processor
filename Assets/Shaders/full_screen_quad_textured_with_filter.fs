@@ -7,7 +7,7 @@ in vec2 textureCoords;
 void main()
 {
     vec4 color = texture(image, textureCoords);
-    color.x = 0.0;
+    color.y *= 0.9;
 
     gl_FragColor = color;
 }
