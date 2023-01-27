@@ -85,15 +85,12 @@ int main()
     glDebugMessageCallback(glDebugOutput, nullptr);
     glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 
-    cv::VideoCapture original("../../Assets/Movies/original.MOV");
-    cv::VideoCapture modified("../../Assets/Movies/modified.MP4");
-
     const auto vs_shader_code = provid::file::File::ReadWholeBinaryFile(
         "../../Assets/Shaders/full_screen_quad.vs");
     const auto vs_shader_id = CompileShader(GL_VERTEX_SHADER, vs_shader_code);
 
     const auto fs_shader_code = provid::file::File::ReadWholeBinaryFile(
-        "../../Assets/Shaders/full_screen_quad_textured.fs");
+        "../../Assets/Shaders/full_screen_quad_textured_with_filter.fs");
     const auto fs_shader_id = CompileShader(GL_FRAGMENT_SHADER, fs_shader_code);
 
     const auto screen_quad_program_id = MakeProgram({vs_shader_id, fs_shader_id});
@@ -115,23 +112,53 @@ int main()
 
     glUseProgram(screen_quad_program_id);
 
+    ///// render to texture
+    /*GLuint framebuffer = 0;
+    glGenFramebuffers(1, &framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+    GLuint render_texture;
+    glGenTextures(1, &render_texture);
+    glBindTexture(GL_TEXTURE_2D, render_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1024, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, render_texture, 0);
+    GLenum draw_buffers[1] = {GL_COLOR_ATTACHMENT0};
+    glDrawBuffers(1, draw_buffers);
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    {
+       throw std::runtime_error("Failed to use off-screen frame buffer");
+    }*/
+    ///// !!! render to texture
+
     GLuint texture_id = 0;
     glGenTextures(1, &texture_id);
 
+    //cv::VideoCapture original("../../Assets/Movies/original.MOV");
+    cv::VideoCapture original("../../Assets/Movies/modified.MP4");
+
+    cv::Mat image;
+    original >> image;
+
+    glfwSetWindowSize(window, image.cols, image.rows);
+    glViewport(0, 0, image.cols, image.rows);
+
+    const auto fourcc = cv::VideoWriter::fourcc('m', 'p', '4', 'v');
+    cv::VideoWriter new_movie("../../Assets/Movies/new_movie.mp4",
+                              fourcc,
+                              original.get(cv::CAP_PROP_FPS),
+                              cv::Size(image.cols, image.rows));
+
     auto b = 1;
+    auto frames_to_convert = 30;
     while (!glfwWindowShouldClose(window))
     {
-        cv::Mat image;
-        original >> image;
-        if (!image.empty())
+        if (!image.empty() && frames_to_convert > 0)
         {
-            glClearColor(0.0, 0.5f, static_cast<float>(b) / 1000.0f, 1.0f);
-            b = (b + 5) % 1000;
-            glClear(GL_COLOR_BUFFER_BIT);
-
             glActiveTexture(GL_TEXTURE0 + 0);
             glBindTexture(GL_TEXTURE_2D, texture_id);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1024, 0, GL_BGR, GL_UNSIGNED_BYTE, image.data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.cols, image.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, image.data);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -139,11 +166,26 @@ int main()
 
             glUniform1i(glGetUniformLocation(screen_quad_program_id, "image"), 0);
 
+            ///
+            //glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+            //glViewport(0, 0, 1920, 1024);
+            ///
+
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
+            cv::Mat output_image(image.rows, image.cols, image.type());
+            glReadPixels(0, 0, image.cols, image.rows, GL_BGR, GL_UNSIGNED_BYTE, output_image.data);
+            new_movie.write(output_image);
+
             glfwSwapBuffers(window);
+            --frames_to_convert;
+        }
+        else
+        {
+            glfwSetWindowShouldClose(window, GLFW_TRUE);
         }
 
+        original >> image;
         glfwPollEvents();
     }
 
