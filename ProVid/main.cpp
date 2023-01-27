@@ -166,7 +166,7 @@ int main()
     glfwSetWindowSize(window, new_width, new_height);
     glViewport(0, 0, new_width, new_height);
 
-    provid::video::VideoWriter new_movie("../../Assets/Movies/new_movie.mp4", new_width, new_height, new_fps);
+    provid::video::VideoWriter new_movie("../../Assets/Movies/changed.mp4", new_width, new_height, new_fps);
 
     auto frames_to_convert = 300;
     while (!glfwWindowShouldClose(window))
@@ -183,8 +183,13 @@ int main()
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-            glUniform1i(glGetUniformLocation(screen_quad_program_id, "image"), 0);
-            glUniform2f(glGetUniformLocation(screen_quad_program_id, "aspectRatio"), aspect_x, aspect_y);
+            glUniform2f(glGetUniformLocation(screen_quad_program_id, "uAspectRatio"), aspect_x, aspect_y);
+
+            glUniform1i(glGetUniformLocation(screen_quad_program_id, "uImage"), 0);
+            glUniform1f(glGetUniformLocation(screen_quad_program_id, "uBrightness"), 0.24f);
+            glUniform1f(glGetUniformLocation(screen_quad_program_id, "uContrast"), -0.4f);
+            glUniform1f(glGetUniformLocation(screen_quad_program_id, "uExposure"), 0.0f);
+            glUniform1f(glGetUniformLocation(screen_quad_program_id, "uSaturation"), 0.0f);
 
             ///
             //glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
