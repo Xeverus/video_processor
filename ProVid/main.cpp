@@ -135,8 +135,11 @@ int main()
     GLuint texture_id = 0;
     glGenTextures(1, &texture_id);
 
-    //cv::VideoCapture original("../../Assets/Movies/original.MOV");
-    cv::VideoCapture original("../../Assets/Movies/modified.MP4");
+    const auto video_path =
+        //"../../Assets/Movies/original.MOV";
+        "../../Assets/Movies/modified.MP4";
+    cv::VideoCapture original(video_path);
+    std::cout << original.get(cv::CAP_PROP_ORIENTATION_AUTO) << ' ' << original.get(cv::CAP_PROP_FRAME_WIDTH) << ' ' << original.get(cv::CAP_PROP_FRAME_HEIGHT) << std::endl;
 
     cv::Mat image;
     original >> image;
@@ -145,13 +148,14 @@ int main()
     glViewport(0, 0, image.cols, image.rows);
 
     const auto fourcc = cv::VideoWriter::fourcc('m', 'p', '4', 'v');
+    const auto fps = original.get(cv::CAP_PROP_FPS);
     cv::VideoWriter new_movie("../../Assets/Movies/new_movie.mp4",
                               fourcc,
-                              original.get(cv::CAP_PROP_FPS),
+                              fps,
                               cv::Size(image.cols, image.rows));
 
     auto b = 1;
-    auto frames_to_convert = 30;
+    auto frames_to_convert = 300;
     while (!glfwWindowShouldClose(window))
     {
         if (!image.empty() && frames_to_convert > 0)
