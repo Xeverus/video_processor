@@ -4,7 +4,11 @@ set(PROJECT_NAME "ProVid")
 project(${PROJECT_NAME})
 
 add_executable(ProVid
-        main.cpp
+        Main.cpp
+        Apps/Processor.cpp
+        Apps/Processor.h
+        Apps/ShaderLab.cpp
+        Apps/ShaderLab.h
         Filesystem/BinaryFile.cpp
         Filesystem/BinaryFile.h
         Video/VideoReader.cpp
@@ -18,6 +22,7 @@ add_dependencies(${PROJECT_NAME}
         "opencv")
 
 target_include_directories(${PROJECT_NAME}
+        PRIVATE ${CMAKE_SOURCE_DIR}/ProVid
         PRIVATE ${CMAKE_BINARY_DIR}/install/glad/include
         PRIVATE ${CMAKE_BINARY_DIR}/install/glfw/include
         PRIVATE ${CMAKE_BINARY_DIR}/install/opencv/include

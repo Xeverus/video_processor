@@ -1,3 +1,5 @@
+#include "Processor.h"
+
 #include <array>
 #include <iostream>
 #include <sstream>
@@ -9,6 +11,9 @@
 #include "Filesystem/BinaryFile.h"
 #include "Video/VideoReader.h"
 #include "Video/VideoWriter.h"
+
+namespace
+{
 
 GLuint CompileShader(GLenum shader_type, const std::vector<char>& shader_code)
 {
@@ -65,7 +70,7 @@ glDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei le
     std::cout << message << std::endl;
 }
 
-int main()
+void main()
 {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -80,7 +85,7 @@ int main()
     if (version == 0)
     {
         std::cout << "Failed to initialize OpenGL context" << std::endl;
-        return -1;
+        return;
     }
     std::cout << "Loaded OpenGL " << GLAD_VERSION_MAJOR(version) << "." << GLAD_VERSION_MINOR(version) << std::endl;
 
@@ -141,7 +146,7 @@ int main()
 
     const auto video_path =
         "../../Assets/Movies/original.MOV";
-        //"../../Assets/Movies/modified.MP4";
+    //"../../Assets/Movies/modified.MP4";
     provid::video::VideoReader video(video_path);
 
     const auto old_width = video.GetFrameWidth();
@@ -186,8 +191,8 @@ int main()
             glUniform2f(glGetUniformLocation(screen_quad_program_id, "uAspectRatio"), aspect_x, aspect_y);
 
             glUniform1i(glGetUniformLocation(screen_quad_program_id, "uImage"), 0);
-            glUniform1f(glGetUniformLocation(screen_quad_program_id, "uBrightness"), 0.24f);
-            glUniform1f(glGetUniformLocation(screen_quad_program_id, "uContrast"), -0.4f);
+            glUniform1f(glGetUniformLocation(screen_quad_program_id, "uBrightness"), 0.0f);
+            glUniform1f(glGetUniformLocation(screen_quad_program_id, "uContrast"), 0.0f);
             glUniform1f(glGetUniformLocation(screen_quad_program_id, "uExposure"), 0.0f);
             glUniform1f(glGetUniformLocation(screen_quad_program_id, "uSaturation"), 0.0f);
 
@@ -215,5 +220,12 @@ int main()
 
     glfwTerminate();
 
-    return 0;
+    return;
+}
+
+}
+
+void Processor::run()
+{
+    main();
 }
