@@ -1,8 +1,8 @@
-#include "VideoWriter.h"
+#include "video_writer.h"
 
 #include <iostream>
 
-namespace provid::video
+namespace vid_lib::video
 {
 
 VideoWriter::VideoWriter(const std::string& filepath, int width, int height, double fps)

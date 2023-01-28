@@ -1,8 +1,8 @@
-#include "BinaryFile.h"
+#include "binary_file.h"
 
 #include <fstream>
 
-namespace provid::filesystem
+namespace vid_lib::filesystem
 {
 
 std::vector<char> BinaryFile::ReadWhole(const std::string& filepath)

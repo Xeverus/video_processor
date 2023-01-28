@@ -1,8 +1,8 @@
-#include "VideoReader.h"
+#include "video_reader.h"
 
 #include <iostream>
 
-namespace provid::video
+namespace vid_lib::video
 {
 
 VideoReader::VideoReader(const std::string& filepath)

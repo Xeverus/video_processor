@@ -5,4 +5,4 @@ project(VideoProcessing)
 set(CMAKE_CXX_STANDARD 17)
 
 add_subdirectory(third_party)
-#add_subdirectory(pro_vid)
+add_subdirectory(vid_lib)

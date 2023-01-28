@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-namespace provid::filesystem
+namespace vid_lib::filesystem
 {
 
 class BinaryFile
