@@ -109,8 +109,9 @@ void ShaderLab::Run()
     const auto vertical_scale = vid_lib::math::AspectRatio::CalculateVerticalScale(
         video.GetFrameWidth(), video.GetFrameHeight(), new_width, new_height);
 
-    glfwSetWindowSize(window, video.GetFrameWidth(), video.GetFrameHeight());
-    glViewport(0, 0, video.GetFrameWidth(), video.GetFrameHeight());
+    const auto new_window_height = static_cast<int>(static_cast<float>(video.GetFrameHeight()) / vertical_scale);
+    glfwSetWindowSize(window, video.GetFrameWidth(), new_window_height);
+    glViewport(0, 0, video.GetFrameWidth(), new_window_height);
 
     const auto image = video.GetNextFrame();
     cv::flip(image, image, 0);
