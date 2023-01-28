@@ -27,13 +27,14 @@ vec4 makeBlur(vec2 baseTextureCoords, vec2 imageTexelSize)
         4, 16, 26, 16, 4,
         1, 4, 7, 4, 1
     );
+    const float divider = 1.0 / 273.0;
 
-    vec4 color = vec4(0, 0, 0, 0);
+    vec4 color = vec4(0.0, 0.0, 0.0, 0.0);
     for (int i = -2; i < 3; ++i)
     {
         for (int j = -2; j < 3; ++j)
         {
-            float blurWeight = blurKernel[(i + 2) + (j + 2) * 5] / 273.0;
+            float blurWeight = blurKernel[(i + 2) + (j + 2) * 5] * divider;
             color += texture(uImage, baseTextureCoords + imageTexelSize * vec2(i, j)) * blurWeight;
         }
     }
@@ -65,12 +66,21 @@ vec3 adjustSaturation(vec3 color, float saturation)
     return mix(grayscale, color, 1.0 + saturation);
 }
 
-vec3 applyFilmMargins(vec3 color, vec3 filmMarginColor, vec4 filmMarginEdges)
+vec3 applyFilmMargins(vec3 color, vec3 filmMarginColor, vec4 filmMarginEdges, float fragCoordY)
 {
-    float lower_edge_weight = smoothstep(filmMarginEdges.x, filmMarginEdges.y, gl_FragCoord.y);
-    float upper_edge_weight = 1.0 - smoothstep(filmMarginEdges.z, filmMarginEdges.w, gl_FragCoord.y);
+    float lower_edge_weight = smoothstep(filmMarginEdges.x, filmMarginEdges.y, fragCoordY);
+    float upper_edge_weight = 1.0 - smoothstep(filmMarginEdges.z, filmMarginEdges.w, fragCoordY);
 
     return mix(filmMarginColor, color, lower_edge_weight * upper_edge_weight);
+}
+
+float makeNoise(float seed)
+{
+    float f = fract(seed);
+    float s = sign(fract(seed * 0.5) - 0.5);
+    float k = fract(floor(seed) * 0.1731);
+
+    return s * f * (f - 1.0) * ((16.0 * k - 4.0) * f * (f - 1.0) - 1.0);
 }
 
 void main()
@@ -78,12 +88,15 @@ void main()
     vec2 imageTexelSize = 1.0 / textureSize(uImage, 0);
     vec2 channelOffset = vec2(0.0, imageTexelSize.y * 2.0);
 
-    vec3 color = vec3(0, 0, 0);
-    color.x = makeBlur(textureCoords - channelOffset, imageTexelSize).x;
-    color.y = makeBlur(textureCoords, imageTexelSize).y;
-    color.z = makeBlur(textureCoords + channelOffset, imageTexelSize).z;
+    float noise = makeNoise(gl_FragCoord.x * imageTexelSize.x * 32);
+    vec2 texCoords = textureCoords + noise * imageTexelSize.x;
 
-    color = applyFilmMargins(color, uFilmMarginColor, uFilmMarginEdges);
+    vec3 color = vec3(0, 0, 0);
+    color.x = makeBlur(texCoords - channelOffset, imageTexelSize).x;
+    color.y = makeBlur(texCoords, imageTexelSize).y;
+    color.z = makeBlur(texCoords + channelOffset, imageTexelSize).z;
+
+    color = applyFilmMargins(color, uFilmMarginColor, uFilmMarginEdges, gl_FragCoord.y + noise);
 
     color = adjustSaturation(color, uSaturation);
     color = adjustExposure(color, uExposure);
