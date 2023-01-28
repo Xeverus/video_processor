@@ -6,3 +6,4 @@ set(CMAKE_CXX_STANDARD 17)
 
 add_subdirectory(third_party)
 add_subdirectory(vid_lib)
+add_subdirectory(apps)
