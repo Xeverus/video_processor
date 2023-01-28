@@ -1,12 +1,18 @@
 #version 460 core
 
+// 0, 1 = edges for lower film's margin
+// 2, 3 = edges for upper film's margin
 uniform sampler2D uImage;
 
 uniform float uBrightness;
 uniform float uContrast;
 uniform float uExposure;
 uniform float uSaturation;
+
 uniform vec3 uTint;
+
+uniform vec3 uFilmMarginColor;
+uniform vec4 uFilmMarginEdges;
 
 in vec2 textureCoords;
 
@@ -59,15 +65,25 @@ vec3 adjustSaturation(vec3 color, float saturation)
     return mix(grayscale, color, 1.0 + saturation);
 }
 
+vec3 applyFilmMargins(vec3 color, vec3 filmMarginColor, vec4 filmMarginEdges)
+{
+    float lower_edge_weight = smoothstep(filmMarginEdges.x, filmMarginEdges.y, gl_FragCoord.y);
+    float upper_edge_weight = 1.0 - smoothstep(filmMarginEdges.z, filmMarginEdges.w, gl_FragCoord.y);
+
+    return mix(filmMarginColor, color, lower_edge_weight * upper_edge_weight);
+}
+
 void main()
 {
     vec2 imageTexelSize = 1.0 / textureSize(uImage, 0);
-    vec2 channelOffset = vec2(0.0, imageTexelSize.y * 2.0f);
+    vec2 channelOffset = vec2(0.0, imageTexelSize.y * 2.0);
 
     vec3 color = vec3(0, 0, 0);
     color.x = makeBlur(textureCoords - channelOffset, imageTexelSize).x;
     color.y = makeBlur(textureCoords, imageTexelSize).y;
     color.z = makeBlur(textureCoords + channelOffset, imageTexelSize).z;
+
+    color = applyFilmMargins(color, uFilmMarginColor, uFilmMarginEdges);
 
     color = adjustSaturation(color, uSaturation);
     color = adjustExposure(color, uExposure);

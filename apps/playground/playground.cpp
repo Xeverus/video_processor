@@ -1,6 +1,7 @@
 #include <playground.h>
 
 #include <vid_lib/math/aspect_ratio.h>
+#include <vid_lib/math/film.h>
 
 #include <vid_lib/opengl/opengl.h>
 #include <vid_lib/opengl/debug/debug_messenger.h>
@@ -63,8 +64,12 @@ void Playground::Run()
     const auto new_width = 480;
     const auto new_height = 640;
 
+    film_margin_edges_ = vid_lib::math::Film::CalculateMarginEdges(new_height, 10, 3);
+
     const auto vertical_scale = vid_lib::math::AspectRatio::CalculateVerticalScale(
         video.GetFrameWidth(), video.GetFrameHeight(), new_width, new_height);
+    // should I take margin size into consideration???
+    // + 26.0f / static_cast<float>(new_height);
 
     glfwSetWindowSize(window, new_width, new_height);
     glViewport(0, 0, new_width, new_height);
@@ -94,7 +99,9 @@ void Playground::Run()
             glUniform1f(glGetUniformLocation(program, "uExposure"), exposure_);
             glUniform1f(glGetUniformLocation(program, "uContrast"), contrast_);
             glUniform1f(glGetUniformLocation(program, "uBrightness"), brightness_);
-            glUniform3f(glGetUniformLocation(program, "uTint"), tint_[0], tint_[1], tint_[2]);
+            glUniform3fv(glGetUniformLocation(program, "uTint"), 1, tint_.data());
+            glUniform3fv(glGetUniformLocation(program, "uFilmMarginColor"), 1, film_margin_color_.data());
+            glUniform4fv(glGetUniformLocation(program, "uFilmMarginEdges"), 1, film_margin_edges_.data());
 
             ///
             //glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);

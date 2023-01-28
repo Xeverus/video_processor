@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 #include <vid_lib/opengl/opengl.h>
 
 class ShaderLab
@@ -12,7 +14,10 @@ private:
     float exposure_ = 0.05f;
     float contrast_ = 0.15f;
     float brightness_ = -0.1f;
-    float tint_[3] = {1.0f, 1.0f, 1.0f};
+    std::array<float, 3> tint_ = {1.0f, 1.0f, 1.0f};
+    std::array<float, 3> film_margin_color_ = {0.15f, 0.08f, 0.0f};
+    std::array<float, 4> film_margin_edges_ = {0.0f};
+
     bool up = true;
 
 private:

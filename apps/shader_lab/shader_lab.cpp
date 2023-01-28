@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include <vid_lib/math/aspect_ratio.h>
+#include <vid_lib/math/film.h>
 
 #include <vid_lib/opengl/debug/debug_messenger.h>
 #include <vid_lib/opengl/shader/shader_utils.h>
@@ -113,6 +114,8 @@ void ShaderLab::Run()
     glfwSetWindowSize(window, video.GetFrameWidth(), new_window_height);
     glViewport(0, 0, video.GetFrameWidth(), new_window_height);
 
+    film_margin_edges_ = vid_lib::math::Film::CalculateMarginEdges(new_window_height, 24, 8);
+
     const auto image = video.GetNextFrame();
     cv::flip(image, image, 0);
 
@@ -134,7 +137,9 @@ void ShaderLab::Run()
         glUniform1f(glGetUniformLocation(program, "uContrast"), contrast_);
         glUniform1f(glGetUniformLocation(program, "uExposure"), exposure_);
         glUniform1f(glGetUniformLocation(program, "uSaturation"), saturation_);
-        glUniform3f(glGetUniformLocation(program, "uTint"), tint_[0], tint_[1], tint_[2]);
+        glUniform3fv(glGetUniformLocation(program, "uTint"), 1, tint_.data());
+        glUniform3fv(glGetUniformLocation(program, "uFilmMarginColor"), 1, film_margin_color_.data());
+        glUniform4fv(glGetUniformLocation(program, "uFilmMarginEdges"), 1, film_margin_edges_.data());
 
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
