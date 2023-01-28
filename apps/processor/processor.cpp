@@ -107,14 +107,10 @@ void Processor::Run()
     glActiveTexture(GL_TEXTURE0 + 0);
     glViewport(0, 0, config_.output_movie_width, config_.output_movie_height);
 
-    const auto program = vid_lib::opengl::shader::ShaderUtils::MakeProgramFromFiles(
+    const auto program_0 = vid_lib::opengl::shader::ShaderUtils::MakeProgramFromFiles(
         "../../../Assets/Shaders/processor_0.vs", "../../../Assets/Shaders/processor_0.fs");
-    glUseProgram(program);
-
-    glUniform1f(glGetUniformLocation(program, "u_verticalScale"), vertical_scale);
-    glUniform1i(glGetUniformLocation(program, "u_image"), 0);
-    glUniform3fv(glGetUniformLocation(program, "u_filmMarginColor"), 1, film_margin_color_.data());
-    glUniform4fv(glGetUniformLocation(program, "u_filmMarginEdges"), 1, film_margin_edges_.data());
+    const auto program_1 = vid_lib::opengl::shader::ShaderUtils::MakeProgramFromFiles(
+        "../../../Assets/Shaders/processor_1.vs", "../../../Assets/Shaders/processor_1.fs");
 
     auto input_image = input_movie.GetNextFrame();
     cv::Mat output_image(config_.output_movie_height, config_.output_movie_width, input_image.type());
@@ -123,15 +119,29 @@ void Processor::Run()
     {
         LoadImageToOpenGlTexture(input_image, image_texture_id);
 
+        // phase 1
+        glUseProgram(program_0);
+        glUniform1f(glGetUniformLocation(program_0, "u_verticalScale"), vertical_scale);
+        glUniform1i(glGetUniformLocation(program_0, "u_image"), 0);
+        glUniform3fv(glGetUniformLocation(program_0, "u_filmMarginColor"), 1, film_margin_color_.data());
+        glUniform4fv(glGetUniformLocation(program_0, "u_filmMarginEdges"), 1, film_margin_edges_.data());
+
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_id);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        glReadPixels(0, 0, config_.output_movie_width, config_.output_movie_height, GL_BGR, GL_UNSIGNED_BYTE,
-                     output_image.data);
 
+        // phase 2
+        glUseProgram(program_1);
+        glUniform1i(glGetUniformLocation(program_1, "u_image"), 0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        glBindTexture(GL_TEXTURE_2D, framebuffer_texture_id);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+        // phase 3
         glfwSwapBuffers(glfw_window_);
 
+        glReadPixels(0, 0, config_.output_movie_width, config_.output_movie_height, GL_BGR, GL_UNSIGNED_BYTE,
+                     output_image.data);
         output_movie.WriteFrame(output_image);
 
         glfwPollEvents();
