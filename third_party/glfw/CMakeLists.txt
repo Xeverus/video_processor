@@ -4,8 +4,8 @@ include(ExternalProject)
 
 ExternalProject_Add(
         "glfw"
-        SOURCE_DIR "${CMAKE_SOURCE_DIR}/ThirdParty/glfw/glfw/"
-        BINARY_DIR "${CMAKE_BINARY_DIR}/ThirdParty/glfw/bin/"
+        SOURCE_DIR "${CMAKE_SOURCE_DIR}/third_party/glfw/glfw/"
+        BINARY_DIR "${CMAKE_BINARY_DIR}/third_party/glfw/bin/"
         CMAKE_ARGS
             -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}

@@ -1,6 +1,6 @@
-[submodule "ThirdParty/glfw/glfw"]
-	path = ThirdParty/glfw/glfw
+[submodule "third_party/glfw/glfw"]
+	path = third_party/glfw/glfw
 	url = https://github.com/glfw/glfw.git
-[submodule "ThirdParty/opencv/opencv"]
-	path = ThirdParty/opencv/opencv
+[submodule "third_party/opencv/opencv"]
+	path = third_party/opencv/opencv
 	url = https://github.com/opencv/opencv.git

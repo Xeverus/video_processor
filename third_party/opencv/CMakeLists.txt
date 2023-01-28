@@ -4,8 +4,8 @@ include(ExternalProject)
 
 ExternalProject_Add(
         "opencv"
-        SOURCE_DIR "${CMAKE_SOURCE_DIR}/ThirdParty/opencv/opencv/"
-        BINARY_DIR "${CMAKE_BINARY_DIR}/ThirdParty/opencv/bin/"
+        SOURCE_DIR "${CMAKE_SOURCE_DIR}/third_party/opencv/opencv/"
+        BINARY_DIR "${CMAKE_BINARY_DIR}/third_party/opencv/bin/"
         CMAKE_ARGS
             -DBUILD_JAVA=OFF
             -DBUILD_FAT_JAVA_LIB=OFF
