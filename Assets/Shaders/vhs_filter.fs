@@ -14,6 +14,8 @@ uniform vec3 uTint;
 uniform vec3 uFilmMarginColor;
 uniform vec4 uFilmMarginEdges;
 
+uniform float uRandomSeed;
+
 in vec2 textureCoords;
 
 layout(location = 0) out vec3 outColor;
@@ -88,7 +90,7 @@ void main()
     vec2 imageTexelSize = 1.0 / textureSize(uImage, 0);
     vec2 channelOffset = vec2(0.0, imageTexelSize.y * 2.0);
 
-    float noise = makeNoise(gl_FragCoord.x * imageTexelSize.x * 32);
+    float noise = makeNoise(gl_FragCoord.x * imageTexelSize.x * 32.0 + uRandomSeed * 0.2);
     vec2 texCoords = textureCoords + noise * imageTexelSize.x;
 
     vec3 color = vec3(0, 0, 0);

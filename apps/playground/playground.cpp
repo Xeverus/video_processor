@@ -2,6 +2,7 @@
 
 #include <vid_lib/math/aspect_ratio.h>
 #include <vid_lib/math/film.h>
+#include <vid_lib/math/random.h>
 
 #include <vid_lib/opengl/opengl.h>
 #include <vid_lib/opengl/debug/debug_messenger.h>
@@ -77,11 +78,11 @@ void Playground::Run()
     vid_lib::video::VideoWriter new_movie("../../../Assets/Movies/changed.mp4", new_width, new_height,
                                           video.GetFramesPerSecond());
 
-    auto frames_to_convert = 300;
+    vid_lib::math::Random random;
     while (!glfwWindowShouldClose(window))
     {
         auto image = video.GetNextFrame();
-        if (!image.empty() && frames_to_convert > 0)
+        if (!image.empty())
         {
             glActiveTexture(GL_TEXTURE0 + 0);
             glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -102,6 +103,7 @@ void Playground::Run()
             glUniform3fv(glGetUniformLocation(program, "uTint"), 1, tint_.data());
             glUniform3fv(glGetUniformLocation(program, "uFilmMarginColor"), 1, film_margin_color_.data());
             glUniform4fv(glGetUniformLocation(program, "uFilmMarginEdges"), 1, film_margin_edges_.data());
+            glUniform1f(glGetUniformLocation(program, "uRandomSeed"), random.GetNextFloat());
 
             ///
             //glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
@@ -115,7 +117,6 @@ void Playground::Run()
             new_movie.WriteFrame(output_image);
 
             glfwSwapBuffers(window);
-            --frames_to_convert;
         }
         else
         {
