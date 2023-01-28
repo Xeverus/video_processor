@@ -1,5 +1,7 @@
 #include <playground.h>
 
+#include <vid_lib/math/aspect_ratio.h>
+
 #include <vid_lib/opengl/opengl.h>
 #include <vid_lib/opengl/debug/debug_messenger.h>
 #include <vid_lib/opengl/shader/shader_utils.h>
@@ -58,29 +60,17 @@ void Playground::Run()
     //"../../../Assets/Movies/modified.MP4";
     vid_lib::video::VideoReader video(video_path);
 
-    const auto old_width = video.GetFrameWidth();
-    const auto old_height = video.GetFrameHeight();
     const auto new_width = 480;
     const auto new_height = 640;
-    const auto new_fps = video.GetFramesPerSecond();
 
-    auto CalculateAspectRatio = [old_width, old_height, new_width, new_height]()
-    {
-        const auto ow = static_cast<float>(old_width);
-        const auto oh = static_cast<float>(old_height);
-        const auto nw = static_cast<float>(new_width);
-        const auto nh = static_cast<float>(new_height);
-
-        return (oh / nh) / (ow / nw);
-    };
-
-    const auto aspect_x = 1.0f;
-    const auto aspect_y = CalculateAspectRatio();
+    const auto vertical_scale = vid_lib::math::AspectRatio::CalculateVerticalScale(
+        video.GetFrameWidth(), video.GetFrameHeight(), new_width, new_height);
 
     glfwSetWindowSize(window, new_width, new_height);
     glViewport(0, 0, new_width, new_height);
 
-    vid_lib::video::VideoWriter new_movie("../../../Assets/Movies/changed.mp4", new_width, new_height, new_fps);
+    vid_lib::video::VideoWriter new_movie("../../../Assets/Movies/changed.mp4", new_width, new_height,
+                                          video.GetFramesPerSecond());
 
     auto frames_to_convert = 300;
     while (!glfwWindowShouldClose(window))
@@ -97,7 +87,7 @@ void Playground::Run()
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-            glUniform2f(glGetUniformLocation(program, "uAspectRatio"), aspect_x, aspect_y);
+            glUniform1f(glGetUniformLocation(program, "uVerticalScale"), vertical_scale);
 
             glUniform1i(glGetUniformLocation(program, "uImage"), 0);
             glUniform1f(glGetUniformLocation(program, "uSaturation"), saturation_);

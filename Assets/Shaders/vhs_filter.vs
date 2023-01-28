@@ -1,6 +1,6 @@
 #version 460 core
 
-uniform vec2 uAspectRatio;
+uniform float uVerticalScale;
 
 out vec2 textureCoords;
 
@@ -20,5 +20,5 @@ void main()
     );
 
     textureCoords = coords[gl_VertexID];
-    gl_Position = vec4(positions[gl_VertexID] * uAspectRatio, 0.0, 1.0);
+    gl_Position = vec4(positions[gl_VertexID] * vec2(1.0, uVerticalScale), 0.0, 1.0);
 }

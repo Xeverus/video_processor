@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <vid_lib/math/aspect_ratio.h>
+
 #include <vid_lib/opengl/debug/debug_messenger.h>
 #include <vid_lib/opengl/shader/shader_utils.h>
 
@@ -101,10 +103,17 @@ void ShaderLab::Run()
     const auto video_path = "../../../Assets/Movies/original.MOV";
     vid_lib::video::VideoReader video(video_path);
 
+    const auto new_width = 480;
+    const auto new_height = 640;
+
+    const auto vertical_scale = vid_lib::math::AspectRatio::CalculateVerticalScale(
+        video.GetFrameWidth(), video.GetFrameHeight(), new_width, new_height);
+
     glfwSetWindowSize(window, video.GetFrameWidth(), video.GetFrameHeight());
     glViewport(0, 0, video.GetFrameWidth(), video.GetFrameHeight());
 
     const auto image = video.GetNextFrame();
+    cv::flip(image, image, 0);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -117,7 +126,7 @@ void ShaderLab::Run()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        glUniform2f(glGetUniformLocation(program, "uAspectRatio"), 1.0f, 1.0f);
+        glUniform1f(glGetUniformLocation(program, "uVerticalScale"), vertical_scale);
 
         glUniform1i(glGetUniformLocation(program, "uImage"), 0);
         glUniform1f(glGetUniformLocation(program, "uBrightness"), brightness_);

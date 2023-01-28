@@ -14,5 +14,8 @@ add_executable(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME}
         PRIVATE .)
 
+add_dependencies(${PROJECT_NAME}
+        vid_lib)
+
 target_link_libraries(${PROJECT_NAME}
         PRIVATE vid_lib)
