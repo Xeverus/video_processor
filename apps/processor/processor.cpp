@@ -1,7 +1,9 @@
 #include <processor.h>
 
 #include <array>
+#include <fstream>
 #include <iostream>
+#include <unordered_map>
 
 #include <opencv2/imgcodecs.hpp>
 
@@ -12,6 +14,9 @@
 #include <vid_lib/opengl/debug/debug_messenger.h>
 #include <vid_lib/opengl/shader/shader_utils.h>
 #include <vid_lib/opengl/texture/framebuffer.h>
+
+#include "vid_lib/sprite/atlas.h"
+#include "vid_lib/sprite/raster_text.h"
 
 #include <vid_lib/video/video_reader.h>
 #include <vid_lib/video/video_writer.h>
@@ -103,46 +108,18 @@ void Processor::Run()
     glActiveTexture(GL_TEXTURE0 + 1);
     LoadImageToOpenGlTexture(font, font_texture_id);
 
-    ////
-    struct Letter
-    {
-        float screen_pos_x;
-        float screen_pos_y;
-        float letter_coord_x;
-        float letter_coord_y;
-    };
-    std::vector<Letter> text =
-        {
-            {
-                0.5, 0.5,
-                0.0, 0.0
-            },
-            {
-                0.6, 0.5,
-                0.1, 0.0
-            },
-            {
-                0.6, 0.6,
-                0.1, 0.1
-            },
-            {
-                0.5, 0.5,
-                0.0, 0.0
-            },
-            {
-                0.6, 0.6,
-                0.1, 0.1
-            },
-            {
-                0.5, 0.6,
-                0.0, 0.1
-            }
-        };
+    const auto font_atlas = vid_lib::sprite::Atlas("../../../assets/fonts/font_48x80.txt");
+    auto text = vid_lib::sprite::RasterText::MakeVerticalText(
+        "PM 6:41", -0.75f, -0.9f, 0.11f, 0.15f, font_atlas);
+    const auto text_bottom = vid_lib::sprite::RasterText::MakeVerticalText(
+        "JAN.29 2023", -0.9f, -0.9f, 0.11f, 0.15f, font_atlas);
+    text.insert(text.end(), text_bottom.begin(), text_bottom.end());
 
+    ////
     GLuint text_buffer;
     glGenBuffers(1, &text_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, text_buffer);
-    glBufferData(GL_ARRAY_BUFFER, text.size() * sizeof(Letter), text.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, text.size() * sizeof(text[0]), text.data(), GL_STATIC_DRAW);
     ////
 
     GLuint vao;
@@ -154,7 +131,7 @@ void Processor::Run()
         glActiveTexture(GL_TEXTURE0 + 0);
         LoadImageToOpenGlTexture(input_image, image_texture_id);
 
-        // phase 1a
+        // phase 1a - add full-screen features
         glUseProgram(program_1a);
         glUniform1f(glGetUniformLocation(program_1a, "u_verticalScale"), vertical_scale);
         glUniform1i(glGetUniformLocation(program_1a, "u_image"), 0);
@@ -165,7 +142,7 @@ void Processor::Run()
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         glFlush();
 
-        // phase 1b
+        // phase 1b - add decals
         glUseProgram(program_1b);
         glUniform1i(glGetUniformLocation(program_1b, "u_image"), 0);
         glUniform1i(glGetUniformLocation(program_1b, "u_fontImage"), 1);
@@ -178,18 +155,16 @@ void Processor::Run()
         glVertexAttribPointer(position_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)0);
         glVertexAttribPointer(coord_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)8);
 
-        framebuffer_1a.BindTexture();
-        framebuffer_1b.Bind();
-        //glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glDrawArrays(GL_TRIANGLES, 0, text.size());
+        glDisable(GL_BLEND);
         glFlush();
-
-        // phase 1b (diff program)
 
         // phase 2a
         glUseProgram(program_2a);
         glUniform1i(glGetUniformLocation(program_2a, "u_image"), 0);
-        framebuffer_1b.BindTexture();
+        framebuffer_1a.BindTexture();
         framebuffer_2a.Bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         glFlush();

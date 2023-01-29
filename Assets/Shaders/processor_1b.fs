@@ -5,11 +5,12 @@ layout(binding = 1) uniform sampler2D u_fontImage;
 
 in vec2 v_textureCoords;
 
-layout(location = 0) out vec3 out_color;
+layout(location = 0) out vec4 out_color;
 
 void main()
 {
-    vec3 color = texture(u_fontImage, v_textureCoords).xyz;
+    vec4 color = texture(u_fontImage, v_textureCoords);
+    color.w = step(0.5, color.x);
 
     out_color = color;
 }

@@ -9,7 +9,7 @@ file(GLOB_RECURSE PROJECT_SOURCE "vid_lib/*.cpp")
 add_library(${PROJECT_NAME}
         ${PROJECT_HEADERS}
         ${PROJECT_SOURCE}
-        )
+        vid_lib/sprite/atlas.h)
 
 add_dependencies(${PROJECT_NAME}
         "glad"
