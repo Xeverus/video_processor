@@ -34,5 +34,6 @@ target_link_libraries(${PROJECT_NAME}
         PRIVATE "glad_lib"
         PRIVATE "glfw3"
         PRIVATE "opencv_core470d"
+        PRIVATE "opencv_imgcodecs470d"
         PRIVATE "opencv_videoio470d"
         )

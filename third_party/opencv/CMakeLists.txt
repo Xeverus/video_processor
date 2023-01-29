@@ -19,7 +19,7 @@ ExternalProject_Add(
             -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR}/install/opencv
             -DOPENCV_DNN_OPENCL=OFF
             -DWITH_OPENCL=OFF
-            -DWITH_PNG=OFF
+            -DWITH_PNG=ON
             -DWITH_JPEG=OFF
             -DWITH_TIFF=OFF
             -DWITH_WEBP=OFF

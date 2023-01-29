@@ -1,6 +1,6 @@
 #version 460 core
 
-uniform sampler2D u_image;
+layout(binding = 0) uniform sampler2D u_image;
 
 // 0, 1 = edges for lower film's margin
 // 2, 3 = edges for upper film's margin
@@ -31,7 +31,6 @@ void main()
     color.x = texture(u_image, v_textureCoords - channelOffset).x;
     color.y = texture(u_image, v_textureCoords).y;
     color.z = texture(u_image, v_textureCoords + channelOffset).z;
-    color = texture(u_image, v_textureCoords).xyz;
 
     color = applyFilmMargins(color, u_filmMarginColor, u_filmMarginEdges, gl_FragCoord.y);
 

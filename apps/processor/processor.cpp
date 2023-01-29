@@ -3,6 +3,8 @@
 #include <array>
 #include <iostream>
 
+#include <opencv2/imgcodecs.hpp>
+
 #include <vid_lib/math/aspect_ratio.h>
 #include <vid_lib/math/film.h>
 #include <vid_lib/math/random.h>
@@ -34,7 +36,7 @@ Config LoadConfig(const int argc, char* argv[])
 void LoadImageToOpenGlTexture(cv::Mat& image, const GLuint texture_id)
 {
     glBindTexture(GL_TEXTURE_2D, texture_id);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.cols, image.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, image.data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, image.cols, image.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, image.data);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -59,16 +61,14 @@ void Processor::Run()
     vid_lib::video::VideoWriter output_movie(config_.output_movie_filepath, config_.output_movie_width,
                                              config_.output_movie_height, config_.output_movie_fps);
 
-    GLuint vao;
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-
     const auto vertical_scale = vid_lib::math::AspectRatio::CalculateVerticalScale(
         input_movie.GetFrameWidth(), input_movie.GetFrameHeight(), config_.output_movie_width,
         config_.output_movie_height);
 
     GLuint image_texture_id = 0;
+    GLuint font_texture_id = 0;
     glGenTextures(1, &image_texture_id);
+    glGenTextures(1, &font_texture_id);
 
     // make buffers
     glfwSetWindowSize(glfw_window_, config_.output_movie_width, config_.output_movie_height);
@@ -85,12 +85,23 @@ void Processor::Run()
                                                                    config_.film_margin_size, config_.film_margin_step);
 
     const auto program_1a = vid_lib::opengl::shader::ShaderUtils::MakeProgramFromFiles(
-        "../../../Assets/Shaders/processor_1a.vs", "../../../Assets/Shaders/processor_1a.fs");
+        "../../../assets/shaders/processor_1a.vs", "../../../assets/shaders/processor_1a.fs");
+    const auto program_1b = vid_lib::opengl::shader::ShaderUtils::MakeProgramFromFiles(
+        "../../../assets/shaders/processor_1b.vs", "../../../assets/shaders/processor_1b.fs");
     const auto program_2a = vid_lib::opengl::shader::ShaderUtils::MakeProgramFromFiles(
-        "../../../Assets/Shaders/processor_2a.vs", "../../../Assets/Shaders/processor_2a.fs");
+        "../../../assets/shaders/processor_2a.vs", "../../../assets/shaders/processor_2a.fs");
 
     auto input_image = input_movie.GetNextFrame();
     cv::Mat output_image(config_.output_movie_height, config_.output_movie_width, input_image.type());
+
+    cv::Mat font = cv::imread("../../../assets/fonts/font_48x80.png");
+
+    glActiveTexture(GL_TEXTURE0 + 1);
+    LoadImageToOpenGlTexture(font, font_texture_id);
+
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
 
     while (!glfwWindowShouldClose(glfw_window_) && !input_image.empty())
     {
@@ -109,12 +120,18 @@ void Processor::Run()
         glFlush();
 
         // phase 1b
-
+        glUseProgram(program_1b);
+        glUniform1i(glGetUniformLocation(program_1b, "u_image"), 0);
+        glUniform1i(glGetUniformLocation(program_1b, "u_fontImage"), 1);
+        framebuffer_1a.BindTexture();
+        framebuffer_1b.Bind();
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        glFlush();
 
         // phase 2a
         glUseProgram(program_2a);
         glUniform1i(glGetUniformLocation(program_2a, "u_image"), 0);
-        framebuffer_1a.BindTexture();
+        framebuffer_1b.BindTexture();
         framebuffer_2a.Bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         glFlush();
