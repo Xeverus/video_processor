@@ -31,6 +31,7 @@ void main()
     color.x = texture(u_image, v_textureCoords - channelOffset).x;
     color.y = texture(u_image, v_textureCoords).y;
     color.z = texture(u_image, v_textureCoords + channelOffset).z;
+    color = texture(u_image, v_textureCoords).xyz;
 
     color = applyFilmMargins(color, u_filmMarginColor, u_filmMarginEdges, gl_FragCoord.y);
 
