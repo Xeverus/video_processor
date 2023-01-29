@@ -9,6 +9,7 @@
 
 #include <vid_lib/opengl/debug/debug_messenger.h>
 #include <vid_lib/opengl/shader/shader_utils.h>
+#include <vid_lib/opengl/texture/framebuffer.h>
 
 #include <vid_lib/video/video_reader.h>
 #include <vid_lib/video/video_writer.h>
@@ -25,7 +26,7 @@ Config LoadConfig(const int argc, char* argv[])
             480,
             640,
             30,
-            12,
+            24,
             3
         };
 }
@@ -36,42 +37,8 @@ void LoadImageToOpenGlTexture(cv::Mat& image, const GLuint texture_id)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.cols, image.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, image.data);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    constexpr auto gen_mipmaps = false;
-    if (gen_mipmaps)
-    {
-        glGenerateMipmap(GL_TEXTURE_2D);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    }
-    else
-    {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    }
-}
-
-GLuint CreateFramebuffer(const GLuint texture_id, const int width, const int height)
-{
-    GLuint framebuffer_id = 0;
-    glGenFramebuffers(1, &framebuffer_id);
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_id);
-
-    glBindTexture(GL_TEXTURE_2D, texture_id);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture_id, 0);
-
-    GLenum draw_buffers[1] = {GL_COLOR_ATTACHMENT0};
-    glDrawBuffers(1, draw_buffers);
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    {
-        throw std::runtime_error("Failed to use off-screen frame buffer");
-    }
-
-    return framebuffer_id;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 }
 
 }
@@ -100,55 +67,57 @@ void Processor::Run()
         input_movie.GetFrameWidth(), input_movie.GetFrameHeight(), config_.output_movie_width,
         config_.output_movie_height);
 
-    std::array<GLuint, 2> texture_ids = {0};
-    glGenTextures(texture_ids.size(), texture_ids.data());
-    GLuint image_texture_id = texture_ids[0];
-    GLuint framebuffer_texture_id = texture_ids[1];
+    GLuint image_texture_id = 0;
+    glGenTextures(1, &image_texture_id);
 
-    const auto framebuffer_id = CreateFramebuffer(framebuffer_texture_id, config_.output_movie_width,
-                                                  config_.output_movie_height);
-
+    // make buffers
     glfwSetWindowSize(glfw_window_, config_.output_movie_width, config_.output_movie_height);
-    glViewport(0, 0, config_.output_movie_width, config_.output_movie_height);
 
-    film_margin_edges_ = vid_lib::math::Film::CalculateMarginEdges(config_.output_movie_height,
+    const auto framebuffer_1a = vid_lib::opengl::texture::Framebuffer::MakeNew(
+        input_movie.GetFrameWidth(), input_movie.GetFrameHeight());
+    const auto framebuffer_1b = vid_lib::opengl::texture::Framebuffer::MakeNew(
+        input_movie.GetFrameWidth(), input_movie.GetFrameHeight());
+    const auto framebuffer_2a = vid_lib::opengl::texture::Framebuffer::WrapDefault(
+        config_.output_movie_width, config_.output_movie_height);
+    //
+
+    film_margin_edges_ = vid_lib::math::Film::CalculateMarginEdges(input_movie.GetFrameHeight(),
                                                                    config_.film_margin_size, config_.film_margin_step);
 
-    glActiveTexture(GL_TEXTURE0 + 0);
-    glViewport(0, 0, config_.output_movie_width, config_.output_movie_height);
-
-    const auto program_0 = vid_lib::opengl::shader::ShaderUtils::MakeProgramFromFiles(
-        "../../../Assets/Shaders/processor_0.vs", "../../../Assets/Shaders/processor_0.fs");
-    const auto program_1 = vid_lib::opengl::shader::ShaderUtils::MakeProgramFromFiles(
-        "../../../Assets/Shaders/processor_1.vs", "../../../Assets/Shaders/processor_1.fs");
+    const auto program_1a = vid_lib::opengl::shader::ShaderUtils::MakeProgramFromFiles(
+        "../../../Assets/Shaders/processor_1a.vs", "../../../Assets/Shaders/processor_1a.fs");
+    const auto program_2a = vid_lib::opengl::shader::ShaderUtils::MakeProgramFromFiles(
+        "../../../Assets/Shaders/processor_2a.vs", "../../../Assets/Shaders/processor_2a.fs");
 
     auto input_image = input_movie.GetNextFrame();
     cv::Mat output_image(config_.output_movie_height, config_.output_movie_width, input_image.type());
 
     while (!glfwWindowShouldClose(glfw_window_) && !input_image.empty())
     {
+        glActiveTexture(GL_TEXTURE0 + 0);
         LoadImageToOpenGlTexture(input_image, image_texture_id);
 
-        // phase 1
-        glUseProgram(program_0);
-        glUniform1f(glGetUniformLocation(program_0, "u_verticalScale"), vertical_scale);
-        glUniform1i(glGetUniformLocation(program_0, "u_image"), 0);
-        glUniform3fv(glGetUniformLocation(program_0, "u_filmMarginColor"), 1, film_margin_color_.data());
-        glUniform4fv(glGetUniformLocation(program_0, "u_filmMarginEdges"), 1, film_margin_edges_.data());
+        // phase 1a
+        glUseProgram(program_1a);
+        glUniform1f(glGetUniformLocation(program_1a, "u_verticalScale"), vertical_scale);
+        glUniform1i(glGetUniformLocation(program_1a, "u_image"), 0);
+        glUniform3fv(glGetUniformLocation(program_1a, "u_filmMarginColor"), 1, film_margin_color_.data());
+        glUniform4fv(glGetUniformLocation(program_1a, "u_filmMarginEdges"), 1, film_margin_edges_.data());
 
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_id);
+        framebuffer_1a.Bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        glFlush();
 
-        // phase 2
-        glUseProgram(program_1);
-        glUniform1i(glGetUniformLocation(program_1, "u_image"), 0);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        // phase 1b
 
-        glBindTexture(GL_TEXTURE_2D, framebuffer_texture_id);
+
+        // phase 2a
+        glUseProgram(program_2a);
+        glUniform1i(glGetUniformLocation(program_2a, "u_image"), 0);
+        framebuffer_1a.BindTexture();
+        framebuffer_2a.Bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-        // phase 3
-        glfwSwapBuffers(glfw_window_);
+        glFlush();
 
         glReadPixels(0, 0, config_.output_movie_width, config_.output_movie_height, GL_BGR, GL_UNSIGNED_BYTE,
                      output_image.data);

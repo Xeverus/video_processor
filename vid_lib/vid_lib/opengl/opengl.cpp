@@ -14,6 +14,7 @@ void SetWindowHints()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+    glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
 }
 
 GLFWwindow* CreateWindowAndContext(const OpenGl::WindowParameters& window_parameters)
