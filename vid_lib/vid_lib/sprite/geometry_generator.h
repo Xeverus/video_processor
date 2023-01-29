@@ -31,6 +31,12 @@ public:
                float screen_pos_x, float screen_pos_y,
                float sprite_size_x, float sprite_size_y,
                const vid_lib::sprite::Atlas& atlas);
+
+    static std::vector<SpriteVertex>
+    MakeRotatedSprite(char sprite_name,
+                      float screen_pos_x, float screen_pos_y,
+                      float sprite_size_x, float sprite_size_y,
+                      const vid_lib::sprite::Atlas& atlas);
 };
 
 }

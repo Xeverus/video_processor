@@ -10,7 +10,7 @@ layout(location = 0) out vec4 out_color;
 void main()
 {
     vec4 color = texture(u_fontImage, v_textureCoords);
-    color.w = step(0.5, color.x);
+    color.w = smoothstep(0.0, 1.0, color.x);
 
     out_color = color;
 }

@@ -1,9 +1,6 @@
 #include <processor.h>
 
-#include <array>
 #include <fstream>
-#include <iostream>
-#include <unordered_map>
 
 #include <opencv2/imgcodecs.hpp>
 
@@ -72,8 +69,10 @@ void Processor::Run()
 
     GLuint image_texture_id = 0;
     GLuint font_texture_id = 0;
+    GLuint decals_texture_id = 0;
     glGenTextures(1, &image_texture_id);
     glGenTextures(1, &font_texture_id);
+    glGenTextures(1, &decals_texture_id);
 
     // make buffers
     glfwSetWindowSize(glfw_window_, config_.output_movie_width, config_.output_movie_height);
@@ -106,9 +105,14 @@ void Processor::Run()
     cv::Mat output_image(config_.output_movie_height, config_.output_movie_width, input_image.type());
 
     const auto font_atlas = vid_lib::sprite::Atlas("../../../assets/sprites/font_48x80.txt");
-    cv::Mat font = cv::imread("../../../assets/sprites/font_48x80.png");
+    cv::Mat font_image = cv::imread("../../../assets/sprites/font_48x80.png");
     glActiveTexture(GL_TEXTURE0 + 1);
-    LoadImageToOpenGlTexture(font, font_texture_id);
+    LoadImageToOpenGlTexture(font_image, font_texture_id);
+
+    const auto decals_atlas = vid_lib::sprite::Atlas("../../../assets/sprites/decals_64x128.txt");
+    cv::Mat decals_image = cv::imread("../../../assets/sprites/decals_64x128.png");
+    glActiveTexture(GL_TEXTURE0 + 2);
+    LoadImageToOpenGlTexture(decals_image, decals_texture_id);
 
     auto text = vid_lib::sprite::GeometryGenerator::MakeVerticalText(
         "PM 6:41", -0.75f, -0.9f, 0.11f, 0.15f, font_atlas);
@@ -116,11 +120,28 @@ void Processor::Run()
         "JAN.29 2023", -0.9f, -0.9f, 0.11f, 0.15f, font_atlas);
     text.insert(text.end(), text_bottom.begin(), text_bottom.end());
 
+    vid_lib::math::Random random;
+    std::string decals_names = "aabffgedcchcd";
+    std::vector<vid_lib::sprite::GeometryGenerator::SpriteVertex> decals;
+    decals.reserve(decals_names.size() * 6);
+    for (const auto decal_name: decals_names)
+    {
+        const auto pos_x = (random.GetNextFloat() * 2.0f - 1.0f) * 0.8f;
+        const auto pos_y = (random.GetNextFloat() * 2.0f - 1.0f) * 0.8f;
+        const auto decal = vid_lib::sprite::GeometryGenerator::MakeSprite(decal_name, pos_x, pos_y, 0.2f, 0.5f,
+                                                                          decals_atlas);
+        decals.insert(decals.end(), decal.begin(), decal.end());
+    }
+
     ////
     GLuint text_buffer;
+    GLuint decals_buffer;
     glGenBuffers(1, &text_buffer);
+    glGenBuffers(1, &decals_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, text_buffer);
     glBufferData(GL_ARRAY_BUFFER, text.size() * sizeof(text[0]), text.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, decals_buffer);
+    glBufferData(GL_ARRAY_BUFFER, decals.size() * sizeof(decals[0]), decals.data(), GL_STATIC_DRAW);
     ////
 
     GLuint vao;
@@ -143,24 +164,42 @@ void Processor::Run()
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         glFlush();
 
-        // phase 1b - add text and white artifacts
+        // phase 1b - add text and white decals
         glUseProgram(program_1b);
         glUniform1i(glGetUniformLocation(program_1b, "u_image"), 0);
         glUniform1i(glGetUniformLocation(program_1b, "u_fontImage"), 1);
 
-        glBindBuffer(GL_ARRAY_BUFFER, text_buffer);
-        const auto position_location = glGetAttribLocation(program_1b, "in_letterPosition");
-        const auto coord_location = glGetAttribLocation(program_1b, "in_letterTextureCoords");
-        glEnableVertexAttribArray(position_location);
-        glEnableVertexAttribArray(coord_location);
-        glVertexAttribPointer(position_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)0);
-        glVertexAttribPointer(coord_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)8);
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, text_buffer);
+            const auto position_location = glGetAttribLocation(program_1b, "in_letterPosition");
+            const auto coord_location = glGetAttribLocation(program_1b, "in_letterTextureCoords");
+            glEnableVertexAttribArray(position_location);
+            glEnableVertexAttribArray(coord_location);
+            glVertexAttribPointer(position_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)0);
+            glVertexAttribPointer(coord_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)8);
+        }
 
         glEnable(GL_BLEND);
+
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glDrawArrays(GL_TRIANGLES, 0, text.size());
-        glDisable(GL_BLEND);
         glFlush();
+
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, decals_buffer);
+            const auto position_location = glGetAttribLocation(program_1b, "in_letterPosition");
+            const auto coord_location = glGetAttribLocation(program_1b, "in_letterTextureCoords");
+            glEnableVertexAttribArray(position_location);
+            glEnableVertexAttribArray(coord_location);
+            glVertexAttribPointer(position_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)0);
+            glVertexAttribPointer(coord_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)8);
+        }
+
+        glUniform1i(glGetUniformLocation(program_1b, "u_fontImage"), 2);
+        glDrawArrays(GL_TRIANGLES, 0, decals.size());
+        glFlush();
+
+        glDisable(GL_BLEND);
 
         // phase 1c - apply postprocessing
         glUseProgram(program_1c);
