@@ -38,7 +38,7 @@ void Atlas::LoadAtlasSpritesDataFromStream(std::istream& stream)
         float sprite_index = 0.0f;
         for (char sprite_name : line)
         {
-            sprites_[sprite_name] = {
+            sprite_descriptions_[sprite_name] = {
                 sprite_index * sprite_width_,
                 (sprite_index + 1.0f) * sprite_width_,
                 line_idx * sprite_height_,
@@ -50,10 +50,10 @@ void Atlas::LoadAtlasSpritesDataFromStream(std::istream& stream)
     }
 }
 
-const Atlas::Sprite& Atlas::GetSprite(char sprite_name) const
+const Atlas::SpriteDescription& Atlas::GetSpriteDescription(char sprite_name) const
 {
-    const auto iter = sprites_.find(sprite_name);
-    if (iter == sprites_.end())
+    const auto iter = sprite_descriptions_.find(sprite_name);
+    if (iter == sprite_descriptions_.end())
     {
         throw std::runtime_error(std::string("no sprite with name '") + sprite_name + "'");
     }

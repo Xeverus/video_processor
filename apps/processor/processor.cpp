@@ -16,7 +16,7 @@
 #include <vid_lib/opengl/texture/framebuffer.h>
 
 #include "vid_lib/sprite/atlas.h"
-#include "vid_lib/sprite/raster_text.h"
+#include "vid_lib/sprite/geometry_generator.h"
 
 #include <vid_lib/video/video_reader.h>
 #include <vid_lib/video/video_writer.h>
@@ -110,9 +110,9 @@ void Processor::Run()
     glActiveTexture(GL_TEXTURE0 + 1);
     LoadImageToOpenGlTexture(font, font_texture_id);
 
-    auto text = vid_lib::sprite::RasterText::MakeVerticalText(
+    auto text = vid_lib::sprite::GeometryGenerator::MakeVerticalText(
         "PM 6:41", -0.75f, -0.9f, 0.11f, 0.15f, font_atlas);
-    const auto text_bottom = vid_lib::sprite::RasterText::MakeVerticalText(
+    const auto text_bottom = vid_lib::sprite::GeometryGenerator::MakeVerticalText(
         "JAN.29 2023", -0.9f, -0.9f, 0.11f, 0.15f, font_atlas);
     text.insert(text.end(), text_bottom.begin(), text_bottom.end());
 
