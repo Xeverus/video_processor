@@ -97,18 +97,19 @@ void Processor::Run()
             {0, "in_letterPosition"},
             {1, "in_letterTextureCoords"}
         });
+    const auto program_1c = vid_lib::opengl::shader::ShaderUtils::MakeProgramFromFiles(
+        "../../../assets/shaders/processor_1c.vs", "../../../assets/shaders/processor_1c.fs", {});
     const auto program_2a = vid_lib::opengl::shader::ShaderUtils::MakeProgramFromFiles(
         "../../../assets/shaders/processor_2a.vs", "../../../assets/shaders/processor_2a.fs", {});
 
     auto input_image = input_movie.GetNextFrame();
     cv::Mat output_image(config_.output_movie_height, config_.output_movie_width, input_image.type());
 
-    cv::Mat font = cv::imread("../../../assets/fonts/font_48x80.png");
-
+    const auto font_atlas = vid_lib::sprite::Atlas("../../../assets/sprites/font_48x80.txt");
+    cv::Mat font = cv::imread("../../../assets/sprites/font_48x80.png");
     glActiveTexture(GL_TEXTURE0 + 1);
     LoadImageToOpenGlTexture(font, font_texture_id);
 
-    const auto font_atlas = vid_lib::sprite::Atlas("../../../assets/fonts/font_48x80.txt");
     auto text = vid_lib::sprite::RasterText::MakeVerticalText(
         "PM 6:41", -0.75f, -0.9f, 0.11f, 0.15f, font_atlas);
     const auto text_bottom = vid_lib::sprite::RasterText::MakeVerticalText(
@@ -131,7 +132,7 @@ void Processor::Run()
         glActiveTexture(GL_TEXTURE0 + 0);
         LoadImageToOpenGlTexture(input_image, image_texture_id);
 
-        // phase 1a - add full-screen features
+        // phase 1a - add margins, apply aspect
         glUseProgram(program_1a);
         glUniform1f(glGetUniformLocation(program_1a, "u_verticalScale"), vertical_scale);
         glUniform1i(glGetUniformLocation(program_1a, "u_image"), 0);
@@ -142,7 +143,7 @@ void Processor::Run()
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         glFlush();
 
-        // phase 1b - add decals
+        // phase 1b - add text and white artifacts
         glUseProgram(program_1b);
         glUniform1i(glGetUniformLocation(program_1b, "u_image"), 0);
         glUniform1i(glGetUniformLocation(program_1b, "u_fontImage"), 1);
@@ -161,10 +162,18 @@ void Processor::Run()
         glDisable(GL_BLEND);
         glFlush();
 
-        // phase 2a
+        // phase 1c - apply postprocessing
+        glUseProgram(program_1c);
+        glUniform1i(glGetUniformLocation(program_1c, "u_image"), 0);
+        framebuffer_1a.BindTexture();
+        framebuffer_1b.Bind();
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        glFlush();
+
+        // phase 2a - apply channel separation and rescaling
         glUseProgram(program_2a);
         glUniform1i(glGetUniformLocation(program_2a, "u_image"), 0);
-        framebuffer_1a.BindTexture();
+        framebuffer_1b.BindTexture();
         framebuffer_2a.Bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         glFlush();
