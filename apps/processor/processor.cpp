@@ -85,11 +85,15 @@ void Processor::Run()
                                                                    config_.film_margin_size, config_.film_margin_step);
 
     const auto program_1a = vid_lib::opengl::shader::ShaderUtils::MakeProgramFromFiles(
-        "../../../assets/shaders/processor_1a.vs", "../../../assets/shaders/processor_1a.fs");
+        "../../../assets/shaders/processor_1a.vs", "../../../assets/shaders/processor_1a.fs", {});
     const auto program_1b = vid_lib::opengl::shader::ShaderUtils::MakeProgramFromFiles(
-        "../../../assets/shaders/processor_1b.vs", "../../../assets/shaders/processor_1b.fs");
+        "../../../assets/shaders/processor_1b.vs", "../../../assets/shaders/processor_1b.fs",
+        {
+            {0, "in_letterPosition"},
+            {1, "in_letterTextureCoords"}
+        });
     const auto program_2a = vid_lib::opengl::shader::ShaderUtils::MakeProgramFromFiles(
-        "../../../assets/shaders/processor_2a.vs", "../../../assets/shaders/processor_2a.fs");
+        "../../../assets/shaders/processor_2a.vs", "../../../assets/shaders/processor_2a.fs", {});
 
     auto input_image = input_movie.GetNextFrame();
     cv::Mat output_image(config_.output_movie_height, config_.output_movie_width, input_image.type());
@@ -98,6 +102,48 @@ void Processor::Run()
 
     glActiveTexture(GL_TEXTURE0 + 1);
     LoadImageToOpenGlTexture(font, font_texture_id);
+
+    ////
+    struct Letter
+    {
+        float screen_pos_x;
+        float screen_pos_y;
+        float letter_coord_x;
+        float letter_coord_y;
+    };
+    std::vector<Letter> text =
+        {
+            {
+                0.5, 0.5,
+                0.0, 0.0
+            },
+            {
+                0.6, 0.5,
+                0.1, 0.0
+            },
+            {
+                0.6, 0.6,
+                0.1, 0.1
+            },
+            {
+                0.5, 0.5,
+                0.0, 0.0
+            },
+            {
+                0.6, 0.6,
+                0.1, 0.1
+            },
+            {
+                0.5, 0.6,
+                0.0, 0.1
+            }
+        };
+
+    GLuint text_buffer;
+    glGenBuffers(1, &text_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, text_buffer);
+    glBufferData(GL_ARRAY_BUFFER, text.size() * sizeof(Letter), text.data(), GL_STATIC_DRAW);
+    ////
 
     GLuint vao;
     glGenVertexArrays(1, &vao);
@@ -123,10 +169,22 @@ void Processor::Run()
         glUseProgram(program_1b);
         glUniform1i(glGetUniformLocation(program_1b, "u_image"), 0);
         glUniform1i(glGetUniformLocation(program_1b, "u_fontImage"), 1);
+
+        glBindBuffer(GL_ARRAY_BUFFER, text_buffer);
+        const auto position_location = glGetAttribLocation(program_1b, "in_letterPosition");
+        const auto coord_location = glGetAttribLocation(program_1b, "in_letterTextureCoords");
+        glEnableVertexAttribArray(position_location);
+        glEnableVertexAttribArray(coord_location);
+        glVertexAttribPointer(position_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)0);
+        glVertexAttribPointer(coord_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)8);
+
         framebuffer_1a.BindTexture();
         framebuffer_1b.Bind();
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        //glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        glDrawArrays(GL_TRIANGLES, 0, text.size());
         glFlush();
+
+        // phase 1b (diff program)
 
         // phase 2a
         glUseProgram(program_2a);

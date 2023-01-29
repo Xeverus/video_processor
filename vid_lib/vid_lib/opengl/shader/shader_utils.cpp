@@ -32,12 +32,18 @@ GLuint ShaderUtils::CompileShader(GLenum shader_type, const std::vector<char>& s
     return shader_id;
 }
 
-GLuint ShaderUtils::MakeProgramFromShaders(const std::vector<GLuint>& shaders)
+GLuint ShaderUtils::MakeProgramFromShaders(const std::vector<GLuint>& shaders,
+                                           const std::vector<VertexAttribute>& vertex_attributes)
 {
     const auto program_id = glCreateProgram();
     for (const auto shader_id: shaders)
     {
         glAttachShader(program_id, shader_id);
+    }
+
+    for (const auto& [index, name]: vertex_attributes)
+    {
+        glBindAttribLocation(program_id, index, name.c_str());
     }
 
     glLinkProgram(program_id);
@@ -56,14 +62,15 @@ GLuint ShaderUtils::MakeProgramFromShaders(const std::vector<GLuint>& shaders)
     return program_id;
 }
 
-GLuint ShaderUtils::MakeProgramFromFiles(const std::string& vs_filepath, const std::string& fs_filepath)
+GLuint ShaderUtils::MakeProgramFromFiles(const std::string& vs_filepath, const std::string& fs_filepath,
+                                         const std::vector<VertexAttribute>& vertex_attributes)
 {
     const auto vs_code = filesystem::BinaryFile::ReadWhole(vs_filepath);
     const auto fs_code = filesystem::BinaryFile::ReadWhole(fs_filepath);
 
     const auto vs_id = CompileShader(GL_VERTEX_SHADER, vs_code);
     const auto fs_id = CompileShader(GL_FRAGMENT_SHADER, fs_code);
-    const auto program_id = MakeProgramFromShaders({vs_id, fs_id});
+    const auto program_id = MakeProgramFromShaders({vs_id, fs_id}, vertex_attributes);
 
     glDeleteShader(vs_id);
     glDeleteShader(fs_id);

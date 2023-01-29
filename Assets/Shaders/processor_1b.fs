@@ -9,8 +9,7 @@ layout(location = 0) out vec3 out_color;
 
 void main()
 {
-    vec3 color = texture(u_image, v_textureCoords).xyz;
-    color *= texture(u_fontImage, v_textureCoords).xyz;
+    vec3 color = texture(u_fontImage, v_textureCoords).xyz;
 
     out_color = color;
 }
