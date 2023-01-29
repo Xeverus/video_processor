@@ -24,19 +24,22 @@ public:
     MakeVerticalText(const std::string& letters,
                      float screen_pos_x, float screen_pos_y,
                      float sprite_size_x, float sprite_size_y,
-                     const vid_lib::sprite::Atlas& atlas);
+                     const Atlas& atlas);
 
+    // sprite = 6 vertices
     static std::vector<SpriteVertex>
     MakeSprite(char sprite_name,
                float screen_pos_x, float screen_pos_y,
                float sprite_size_x, float sprite_size_y,
-               const vid_lib::sprite::Atlas& atlas);
+               const Atlas& atlas);
 
-    static std::vector<SpriteVertex>
-    MakeRotatedSprite(char sprite_name,
-                      float screen_pos_x, float screen_pos_y,
-                      float sprite_size_x, float sprite_size_y,
-                      const vid_lib::sprite::Atlas& atlas);
+private:
+    // returns 4 vertices
+    static std::vector<SpriteVertex> MakeSpriteVertices(const Atlas::SpriteDescription& sprite_description,
+                                                        const float screen_pos_x, const float screen_pos_y,
+                                                        const float sprite_size_x, const float sprite_size_y);
+
+    static void RotateSpriteVertices(std::vector<SpriteVertex>& sprite_vertices);
 };
 
 }
