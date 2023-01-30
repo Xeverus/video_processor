@@ -125,6 +125,8 @@ void Processor::Run()
     vid_lib::math::Random random;
     std::vector<vid_lib::sprite::GeometryGenerator::SpriteVertex> decals;
     decals.reserve(16);
+    const auto decal_width = 0.08f;
+    const auto decal_height = decal_width * 5.0f;
     {
         for (auto i = 0; i < 16; ++i)
         {
@@ -132,8 +134,9 @@ void Processor::Run()
             const auto sprite_description = decals_atlas.GetSpriteDescription(decal_name);
             const auto pos_x = (random.GetNextFloat() * 2.0f - 1.0f) * 0.8f;
             const auto pos_y = (random.GetNextFloat() * 2.0f - 1.0f) * 0.8f;
-            const auto decal = vid_lib::sprite::GeometryGenerator::MakeSprite(sprite_description, pos_x, pos_y, 0.14f,
-                                                                              0.37f);
+            const auto decal = vid_lib::sprite::GeometryGenerator::MakeSprite(sprite_description, pos_x, pos_y,
+                                                                              decal_width,
+                                                                              decal_height);
             decals.push_back(decal);
         }
     }
@@ -188,12 +191,14 @@ void Processor::Run()
             glVertexAttribDivisor(coord_location, 1);
 
             glUniform2f(glGetUniformLocation(program_1b, "u_spriteSize"), text_width, text_height);
-            glUniform2f(glGetUniformLocation(program_1b, "u_spriteTextureSize"), 47.0f / 1024.0f, 80.0f / 512.0f);
+            glUniform2f(glGetUniformLocation(program_1b, "u_spriteTextureSize"), font_atlas.GetSpriteTextureWidth(),
+                        font_atlas.GetSpriteTextureHeight());
             glUniform1f(glGetUniformLocation(program_1b, "u_spriteRotation"), 3.14f / 2.0f);
             glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, text.size());
             glFlush();
         }
 
+        if (random.GetNextFloat() < 0.03f)
         {
             glBindBuffer(GL_ARRAY_BUFFER, decals_buffer);
             const auto position_location = glGetAttribLocation(program_1b, "in_letterPosition");
@@ -206,10 +211,11 @@ void Processor::Run()
             glVertexAttribDivisor(coord_location, 1);
 
             glUniform1i(glGetUniformLocation(program_1b, "u_fontImage"), 2);
-            glUniform2f(glGetUniformLocation(program_1b, "u_spriteSize"), 0.14f, 0.37f);
-            glUniform2f(glGetUniformLocation(program_1b, "u_spriteTextureSize"), 64.0f / 256.0f, 128.0f / 256.0f);
+            glUniform2f(glGetUniformLocation(program_1b, "u_spriteSize"), decal_width, decal_height);
+            glUniform2f(glGetUniformLocation(program_1b, "u_spriteTextureSize"), decals_atlas.GetSpriteTextureWidth(),
+                        decals_atlas.GetSpriteTextureHeight());
             glUniform1f(glGetUniformLocation(program_1b, "u_spriteRotation"), 0.0f);
-            const auto instance_number = 2;
+            const auto instance_number = 1;
             const auto first_instance = random.GetNextInt() % (decals.size() - instance_number);
             glDrawArraysInstancedBaseInstance(GL_TRIANGLE_STRIP, 0, 4, instance_number, first_instance);
             glFlush();

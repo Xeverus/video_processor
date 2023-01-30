@@ -21,14 +21,19 @@ public:
 
 public:
     explicit Atlas(const std::string& filepath);
+
     explicit Atlas(std::istream& stream);
 
     const SpriteDescription& GetSpriteDescription(char sprite_name) const;
 
+    const float GetSpriteTextureWidth() const;
+
+    const float GetSpriteTextureHeight() const;
+
 private:
     std::unordered_map<char, SpriteDescription> sprite_descriptions_;
-    float sprite_width_;
-    float sprite_height_;
+    float sprite_texture_width_;
+    float sprite_texture_height_;
 
 private:
     void LoadAtlasSpritesDataFromStream(std::istream& stream);
