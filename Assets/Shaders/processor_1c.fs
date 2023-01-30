@@ -155,7 +155,7 @@ vec3 addLightArtifacts(vec3 color, vec2 textureCoords, float time, float amplitu
 
 vec2 addVerticalDistortion(vec2 textureCoords, float time, float amplitude)
 {
-    vec2 fbmArg = vec2(8.0, 2.0) * (textureCoords + vec2(time * 0.02, 0.0));
+    vec2 fbmArg = vec2(6.0, 0.0) * (textureCoords + vec2(time * 0.04, 0.0));
     textureCoords.y += (fbm(fbmArg) - 0.5) * amplitude;
     return textureCoords;
 }

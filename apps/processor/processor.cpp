@@ -30,8 +30,8 @@ Config LoadConfig(const int argc, char* argv[])
             480,
             640,
             30,
-            24,
-            3
+            32,
+            4
         };
 }
 
