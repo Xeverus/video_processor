@@ -124,18 +124,23 @@ void Processor::Run()
 
     vid_lib::math::Random random;
     std::vector<vid_lib::sprite::GeometryGenerator::SpriteVertex> decals;
-    decals.reserve(16 * 6);
+    decals.reserve(16);
     {
         for (auto i = 0; i < 16; ++i)
         {
-            const auto decal_name = 'a' + static_cast<char>(random.GetNextInt() % 8);
+            const char decal_name = 'a' + static_cast<char>(random.GetNextInt() % 8);
+            const auto sprite_description = decals_atlas.GetSpriteDescription(decal_name);
             const auto pos_x = (random.GetNextFloat() * 2.0f - 1.0f) * 0.8f;
             const auto pos_y = (random.GetNextFloat() * 2.0f - 1.0f) * 0.8f;
-            const auto decal = vid_lib::sprite::GeometryGenerator::MakeSprite(decal_name, pos_x, pos_y, 0.14f, 0.37f,
-                                                                              decals_atlas);
-            decals.insert(decals.end(), decal.begin(), decal.end());
+            const auto decal = vid_lib::sprite::GeometryGenerator::MakeSprite(sprite_description, pos_x, pos_y, 0.14f,
+                                                                              0.37f);
+            decals.push_back(decal);
         }
     }
+
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
 
     ////
     GLuint text_buffer;
@@ -147,10 +152,6 @@ void Processor::Run()
     glBindBuffer(GL_ARRAY_BUFFER, decals_buffer);
     glBufferData(GL_ARRAY_BUFFER, decals.size() * sizeof(decals[0]), decals.data(), GL_STATIC_DRAW);
     ////
-
-    GLuint vao;
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
 
     while (!glfwWindowShouldClose(glfw_window_) && !input_image.empty())
     {
@@ -174,17 +175,22 @@ void Processor::Run()
         glUniform1i(glGetUniformLocation(program_1b, "u_fontImage"), 1);
 
         glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         {
             glBindBuffer(GL_ARRAY_BUFFER, text_buffer);
             const auto position_location = glGetAttribLocation(program_1b, "in_letterPosition");
             const auto coord_location = glGetAttribLocation(program_1b, "in_letterTextureCoords");
             glEnableVertexAttribArray(position_location);
-            glEnableVertexAttribArray(coord_location);
             glVertexAttribPointer(position_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)0);
+            glVertexAttribDivisor(position_location, 1);
+            glEnableVertexAttribArray(coord_location);
             glVertexAttribPointer(coord_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)8);
+            glVertexAttribDivisor(coord_location, 1);
 
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glDrawArrays(GL_TRIANGLES, 0, text.size());
+            glUniform2f(glGetUniformLocation(program_1b, "u_spriteSize"), text_width, text_height);
+            glUniform2f(glGetUniformLocation(program_1b, "u_spriteTextureSize"), 47.0f / 1024.0f, 80.0f / 512.0f);
+            glUniform1f(glGetUniformLocation(program_1b, "u_spriteRotation"), 3.14f / 2.0f);
+            glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, text.size());
             glFlush();
         }
 
@@ -193,13 +199,19 @@ void Processor::Run()
             const auto position_location = glGetAttribLocation(program_1b, "in_letterPosition");
             const auto coord_location = glGetAttribLocation(program_1b, "in_letterTextureCoords");
             glEnableVertexAttribArray(position_location);
-            glEnableVertexAttribArray(coord_location);
             glVertexAttribPointer(position_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)0);
+            glVertexAttribDivisor(position_location, 1);
+            glEnableVertexAttribArray(coord_location);
             glVertexAttribPointer(coord_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)8);
+            glVertexAttribDivisor(coord_location, 1);
 
             glUniform1i(glGetUniformLocation(program_1b, "u_fontImage"), 2);
-            const auto first = random.GetNextInt() % 16;
-            glDrawArrays(GL_TRIANGLES, first * 6, 6);
+            glUniform2f(glGetUniformLocation(program_1b, "u_spriteSize"), 0.14f, 0.37f);
+            glUniform2f(glGetUniformLocation(program_1b, "u_spriteTextureSize"), 64.0f / 256.0f, 128.0f / 256.0f);
+            glUniform1f(glGetUniformLocation(program_1b, "u_spriteRotation"), 0.0f);
+            const auto instance_number = 2;
+            const auto first_instance = random.GetNextInt() % (decals.size() - instance_number);
+            glDrawArraysInstancedBaseInstance(GL_TRIANGLE_STRIP, 0, 4, instance_number, first_instance);
             glFlush();
         }
         glDisable(GL_BLEND);

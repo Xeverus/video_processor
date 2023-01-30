@@ -26,20 +26,10 @@ public:
                      float sprite_width, float sprite_height,
                      const Atlas& atlas);
 
-    // sprite = 6 vertices
-    static std::vector<SpriteVertex>
-    MakeSprite(char sprite_name,
+    static SpriteVertex
+    MakeSprite(const Atlas::SpriteDescription& sprite_description,
                float screen_pos_x, float screen_pos_y,
-               float sprite_width, float sprite_height,
-               const Atlas& atlas);
-
-private:
-    // returns 4 vertices
-    static std::vector<SpriteVertex> MakeSpriteVertices(const Atlas::SpriteDescription& sprite_description,
-                                                        const float screen_pos_x, const float screen_pos_y,
-                                                        const float sprite_width, const float sprite_height);
-
-    static void RotateSpriteVertices(std::vector<SpriteVertex>& sprite_vertices);
+               float sprite_width, float sprite_height);
 };
 
 }
