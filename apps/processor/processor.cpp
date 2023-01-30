@@ -125,8 +125,8 @@ void Processor::Run()
     vid_lib::math::Random random;
     std::vector<vid_lib::sprite::GeometryGenerator::SpriteVertex> decals;
     decals.reserve(16);
-    const auto decal_width = 0.08f;
-    const auto decal_height = decal_width * 5.0f;
+    const auto decal_width = 0.16f;
+    const auto decal_height = decal_width * 2.5f;
     {
         for (auto i = 0; i < 16; ++i)
         {

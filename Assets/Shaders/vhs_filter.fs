@@ -94,18 +94,18 @@ void main()
     vec2 texCoords = textureCoords + noise * imageTexelSize.x;
 
     vec3 color = vec3(0, 0, 0);
-    color.x = makeBlur(texCoords - channelOffset, imageTexelSize).x;
-    color.y = makeBlur(texCoords, imageTexelSize).y;
-    color.z = makeBlur(texCoords + channelOffset, imageTexelSize).z;
+    //color.x = makeBlur(texCoords - channelOffset, imageTexelSize).x;
+    //color.y = makeBlur(texCoords, imageTexelSize).y;
+    //color.z = makeBlur(texCoords + channelOffset, imageTexelSize).z;
+    color = makeBlur(textureCoords, imageTexelSize).xyz;
 
     color = applyFilmMargins(color, uFilmMarginColor, uFilmMarginEdges, gl_FragCoord.y + noise);
 
+    color *= uTint;
     color = adjustSaturation(color, uSaturation);
     color = adjustExposure(color, uExposure);
     color = adjustContrast(color, uContrast);
     color = adjustBrightness(color, uBrightness);
-
-    color *= uTint;
 
     outColor = color;
 }

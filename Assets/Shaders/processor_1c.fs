@@ -81,14 +81,80 @@ vec4 textureWithSharpening3x3(sampler2D image, vec2 textureCoords, vec2 imageTex
     return color;
 }
 
-// Gold Noise 2015 dcerisano@standard3d.com
-// - based on the Golden Ratio
-// - uniform normalized distribution
-// - fastest static noise generator function (also runs at low precision)
-// - use with indicated fractional seeding method.
-float goldNoise(float x, float seed){
-    const float phi = 1.61803398874989484820459;
-    return fract(tan(distance(x * phi, x) * seed) * x);
+vec3 adjustBrightness(vec3 color, float brightness)
+{
+    return brightness + color;
+}
+
+vec3 adjustContrast(vec3 color, float contrast)
+{
+    return (1.0 + contrast) * (color - 0.5) + 0.5;
+}
+
+vec3 adjustExposure(vec3 color, float exposure)
+{
+    return (1.0 + exposure) * color;
+}
+
+vec3 adjustSaturation(vec3 color, float saturation)
+{
+    // https://www.w3.org/TR/WCAG21/#dfn-relative-luminance
+    const vec3 luminosityFactor = vec3(0.2126, 0.7152, 0.0722);
+    vec3 grayscale = vec3(dot(color, luminosityFactor));
+
+    return mix(grayscale, color, 1.0 + saturation);
+}
+
+vec2 rotate(vec2 position, float angle)
+{
+    float s = sin(angle);
+    float c = cos(angle);
+    return vec2(position.x * c - position.y * s, position.x * s + position.y * c);
+}
+
+float hash(vec2 p, float t)
+{
+    vec3 p3 = vec3(p, t);
+    p3 = fract(p3 * 0.1031);
+    p3 += dot(p3, p3.zyx + 31.32);
+    return fract((p3.x + p3.y) * p3.z);
+}
+
+float noise(vec2 p, float t)
+{
+    vec4 b = vec4(floor(p), ceil(p));
+    vec2 f = smoothstep(0.0, 1.0, fract(p));
+    return mix(mix(hash(b.xy, t), hash(b.zy, t), f.x), mix(hash(b.xw, t), hash(b.zw, t), f.x), f.y);
+}
+
+#define num_octaves 16
+float fbm(vec2 pos)
+{
+    const float pi = 3.141592653589793;
+
+    float value = 0.0;
+    float scale = 1.0;
+    float atten = 0.5;
+    float t = 0.0;
+    for(int i = 0; i < num_octaves; ++i)
+    {
+        t += atten;
+        value += noise(pos * scale, float(i)) * atten;
+        scale *= 2.0;
+        atten *= 0.5;
+        pos = rotate(pos, 0.125 * pi);
+    }
+    return value / t;
+}
+
+vec3 addLightArtifacts(vec3 color, float power)
+{
+    float t = fract(u_time);
+    float amplitude = mix(-power * 0.5f, power * 0.5f, t);
+    vec2 fbmArg = vec2(92.0, 24.0) * (v_textureCoords + vec2(t, 0.0));
+    float mask = 1.0f - fbm(fbmArg) * amplitude;
+
+    return color * mask;
 }
 
 void main()
@@ -96,6 +162,13 @@ void main()
     vec2 imageTexelSize = 1.0 / textureSize(u_image, 0);
 
     vec3 color = textureWithBlur5x5(u_image, v_textureCoords, imageTexelSize).xyz;
+    color = addLightArtifacts(color, 0.075);
+
+    color *= vec3(1.24, 1.0, 1.24);
+    color = adjustSaturation(color, -0.1);
+    color = adjustExposure(color, 0.4);
+    color = adjustContrast(color, -0.3);
+    color = adjustBrightness(color, -0.3);
 
     out_color = color;
 }

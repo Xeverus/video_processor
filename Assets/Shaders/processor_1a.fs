@@ -22,6 +22,7 @@ vec3 applyFilmMargins(vec3 color, vec3 filmMarginColor, vec4 filmMarginEdges, fl
 void main()
 {
     vec3 color = texture(u_image, v_textureCoords).xyz;
+
     color = applyFilmMargins(color, u_filmMarginColor, u_filmMarginEdges, gl_FragCoord.y);
 
     out_color = color;
