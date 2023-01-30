@@ -114,8 +114,8 @@ void Processor::Run()
     glActiveTexture(GL_TEXTURE0 + 2);
     LoadImageToOpenGlTexture(decals_image, decals_texture_id);
 
-    const auto text_width = 0.14f;
-    const auto text_height = text_width * 0.6f;
+    const auto text_height = 0.14f;
+    const auto text_width = text_height * 0.6f;
     auto text = vid_lib::sprite::GeometryGenerator::MakeVerticalText(
         "JAN.29 2023", -0.85f, -0.8f, text_width, text_height, font_atlas);
     const auto text_bottom = vid_lib::sprite::GeometryGenerator::MakeVerticalText(

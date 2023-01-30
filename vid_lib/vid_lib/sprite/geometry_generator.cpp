@@ -6,9 +6,11 @@ namespace vid_lib::sprite
 std::vector<GeometryGenerator::SpriteVertex>
 GeometryGenerator::MakeVerticalText(const std::string& letters,
                                     const float screen_pos_x, const float screen_pos_y,
-                                    const float sprite_size_x, const float sprite_size_y,
+                                    float sprite_width, float sprite_height,
                                     const vid_lib::sprite::Atlas& atlas)
 {
+    std::swap(sprite_width, sprite_height);
+
     std::vector<SpriteVertex> text;
     text.reserve(letters.size() * 6);
 
@@ -18,9 +20,9 @@ GeometryGenerator::MakeVerticalText(const std::string& letters,
         const auto& sprite_description = atlas.GetSpriteDescription(letter);
         auto vertices = MakeSpriteVertices(sprite_description,
                                            screen_pos_x,
-                                           screen_pos_y + sprite_index * sprite_size_y,
-                                           sprite_size_x,
-                                           sprite_size_y);
+                                           screen_pos_y + sprite_index * sprite_height,
+                                           sprite_width,
+                                           sprite_height);
         RotateSpriteVertices(vertices);
 
         text.push_back(vertices[0]);
@@ -39,13 +41,13 @@ GeometryGenerator::MakeVerticalText(const std::string& letters,
 std::vector<GeometryGenerator::SpriteVertex>
 GeometryGenerator::MakeSprite(const char sprite_name,
                               const float screen_pos_x, const float screen_pos_y,
-                              const float sprite_size_x, const float sprite_size_y,
+                              const float sprite_width, const float sprite_height,
                               const Atlas& atlas)
 {
     const auto& sprite_description = atlas.GetSpriteDescription(sprite_name);
     const auto vertices = MakeSpriteVertices(sprite_description,
                                              screen_pos_x, screen_pos_y,
-                                             sprite_size_x, sprite_size_y);
+                                             sprite_width, sprite_height);
     return {
         vertices[0], vertices[1], vertices[2], vertices[0], vertices[2], vertices[3]
     };
@@ -54,7 +56,7 @@ GeometryGenerator::MakeSprite(const char sprite_name,
 std::vector<GeometryGenerator::SpriteVertex>
 GeometryGenerator::MakeSpriteVertices(const Atlas::SpriteDescription& sprite_description,
                                       const float screen_pos_x, const float screen_pos_y,
-                                      const float sprite_size_x, const float sprite_size_y)
+                                      const float sprite_width, const float sprite_height)
 {
     const auto topLeft = SpriteVertex
         {
@@ -65,22 +67,22 @@ GeometryGenerator::MakeSpriteVertices(const Atlas::SpriteDescription& sprite_des
         };
     const auto topRight = SpriteVertex
         {
-            screen_pos_x + sprite_size_x,
+            screen_pos_x + sprite_width,
             screen_pos_y,
             sprite_description.texture_coord_x_end,
             sprite_description.texture_coord_y_start
         };
     const auto bottomRight = SpriteVertex
         {
-            screen_pos_x + sprite_size_x,
-            screen_pos_y + sprite_size_y,
+            screen_pos_x + sprite_width,
+            screen_pos_y + sprite_height,
             sprite_description.texture_coord_x_end,
             sprite_description.texture_coord_y_end
         };
     const auto bottomLeft = SpriteVertex
         {
             screen_pos_x,
-            screen_pos_y + sprite_size_y,
+            screen_pos_y + sprite_height,
             sprite_description.texture_coord_x_start,
             sprite_description.texture_coord_y_end
         };
