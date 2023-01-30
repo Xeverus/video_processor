@@ -127,21 +127,21 @@ float noise(vec2 p, float t)
     return mix(mix(hash(b.xy, t), hash(b.zy, t), f.x), mix(hash(b.xw, t), hash(b.zw, t), f.x), f.y);
 }
 
-#define num_octaves 16
+#define num_octaves 4
 float fbm(vec2 pos)
 {
     const float pi = 3.141592653589793;
 
     float value = 0.0;
-    float scale = 1.0;
+    float scale = 2.0;
     float atten = 0.5;
     float t = 0.0;
     for(int i = 0; i < num_octaves; ++i)
     {
         t += atten;
         value += noise(pos * scale, float(i)) * atten;
-        scale *= 2.0;
-        atten *= 0.5;
+        scale *= 12.0;
+        atten *= 0.1;
         pos = rotate(pos, 0.125 * pi);
     }
     return value / t;
@@ -149,12 +149,8 @@ float fbm(vec2 pos)
 
 vec3 addLightArtifacts(vec3 color, float power)
 {
-    float t = fract(u_time);
-    float amplitude = mix(-power * 0.5f, power * 0.5f, t);
-    vec2 fbmArg = vec2(92.0, 24.0) * (v_textureCoords + vec2(t, 0.0));
-    float mask = 1.0f - fbm(fbmArg) * amplitude;
-
-    return color * mask;
+    vec2 fbmArg = vec2(48.0, 12.0) * (v_textureCoords + vec2(u_time, 0.0));
+    return color + fbm(fbmArg) * power;
 }
 
 void main()
@@ -162,7 +158,7 @@ void main()
     vec2 imageTexelSize = 1.0 / textureSize(u_image, 0);
 
     vec3 color = textureWithBlur5x5(u_image, v_textureCoords, imageTexelSize).xyz;
-    color = addLightArtifacts(color, 0.075);
+    color = addLightArtifacts(color, 0.025);
 
     color *= vec3(1.24, 1.0, 1.24);
     color = adjustSaturation(color, -0.1);
