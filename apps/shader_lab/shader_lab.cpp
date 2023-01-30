@@ -92,7 +92,7 @@ void ShaderLab::Run()
     vid_lib::opengl::debug::DebugMessenger::Enable();
 
     const auto program = vid_lib::opengl::shader::ShaderUtils::MakeProgramFromFiles(
-        "../../../Assets/Shaders/vhs_filter.vs", "../../../Assets/Shaders/vhs_filter.fs");
+        "../../../Assets/Shaders/vhs_filter.vs", "../../../Assets/Shaders/vhs_filter.fs", {});
     glUseProgram(program);
 
     GLuint vao;
@@ -145,8 +145,7 @@ void ShaderLab::Run()
         glUniform1f(glGetUniformLocation(program, "uRandomSeed"), random.GetNextFloat());
 
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-        glfwSwapBuffers(window);
+        glFlush();
 
         glfwPollEvents();
     }
