@@ -1,6 +1,7 @@
 #version 460 core
 
 uniform sampler2D u_image;
+uniform float u_time;
 
 in vec2 v_textureCoords;
 
@@ -80,10 +81,21 @@ vec4 textureWithSharpening3x3(sampler2D image, vec2 textureCoords, vec2 imageTex
     return color;
 }
 
+// Gold Noise 2015 dcerisano@standard3d.com
+// - based on the Golden Ratio
+// - uniform normalized distribution
+// - fastest static noise generator function (also runs at low precision)
+// - use with indicated fractional seeding method.
+float goldNoise(float x, float seed){
+    const float phi = 1.61803398874989484820459;
+    return fract(tan(distance(x * phi, x) * seed) * x);
+}
+
 void main()
 {
     vec2 imageTexelSize = 1.0 / textureSize(u_image, 0);
-    vec4 color = textureWithBlur5x5(u_image, v_textureCoords, imageTexelSize);
 
-    out_color = color.xyz;
+    vec3 color = textureWithBlur5x5(u_image, v_textureCoords, imageTexelSize).xyz;
+
+    out_color = color;
 }

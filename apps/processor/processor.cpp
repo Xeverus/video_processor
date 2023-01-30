@@ -156,8 +156,12 @@ void Processor::Run()
     glBufferData(GL_ARRAY_BUFFER, decals.size() * sizeof(decals[0]), decals.data(), GL_STATIC_DRAW);
     ////
 
+    const auto step = 0.73432117f;
+    auto time = 0.0f;
     while (!glfwWindowShouldClose(glfw_window_) && !input_image.empty())
     {
+        time += step;
+
         glActiveTexture(GL_TEXTURE0 + 0);
         LoadImageToOpenGlTexture(input_image, image_texture_id);
 
@@ -225,6 +229,7 @@ void Processor::Run()
         // phase 1c - apply postprocessing
         glUseProgram(program_1c);
         glUniform1i(glGetUniformLocation(program_1c, "u_image"), 0);
+        glUniform1f(glGetUniformLocation(program_1c, "u_time"), time);
         framebuffer_1a.BindTexture();
         framebuffer_1b.Bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
