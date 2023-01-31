@@ -142,12 +142,38 @@ void Processor::Run()
         }
     }
 
-    GLuint vao;
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+    GLuint text_vao;
+    GLuint decals_vao;
+    glGenVertexArrays(1, &text_vao);
+    glGenVertexArrays(1, &decals_vao);
 
+    glBindVertexArray(text_vao);
     vid_lib::opengl::buffer::Buffer text_buffer(text);
+    {
+        text_buffer.Bind();
+        const auto position_location = program_1b->GetAttributeLocation("in_letterPosition");
+        const auto coord_location = program_1b->GetAttributeLocation("in_letterTextureCoords");
+        glEnableVertexAttribArray(position_location);
+        glVertexAttribPointer(position_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)0);
+        glVertexAttribDivisor(position_location, 1);
+        glEnableVertexAttribArray(coord_location);
+        glVertexAttribPointer(coord_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)8);
+        glVertexAttribDivisor(coord_location, 1);
+    }
+
+    glBindVertexArray(decals_vao);
     vid_lib::opengl::buffer::Buffer decals_buffer(decals);
+    {
+        decals_buffer.Bind();
+        const auto position_location = program_1b->GetAttributeLocation("in_letterPosition");
+        const auto coord_location = program_1b->GetAttributeLocation("in_letterTextureCoords");
+        glEnableVertexAttribArray(position_location);
+        glVertexAttribPointer(position_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)0);
+        glVertexAttribDivisor(position_location, 1);
+        glEnableVertexAttribArray(coord_location);
+        glVertexAttribPointer(coord_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)8);
+        glVertexAttribDivisor(coord_location, 1);
+    }
 
     const auto step = 0.73432117f;
     auto time = 0.0f;
@@ -177,16 +203,7 @@ void Processor::Run()
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         {
-            text_buffer.Bind();
-            const auto position_location = program_1b->GetAttributeLocation("in_letterPosition");
-            const auto coord_location = program_1b->GetAttributeLocation("in_letterTextureCoords");
-            glEnableVertexAttribArray(position_location);
-            glVertexAttribPointer(position_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)0);
-            glVertexAttribDivisor(position_location, 1);
-            glEnableVertexAttribArray(coord_location);
-            glVertexAttribPointer(coord_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)8);
-            glVertexAttribDivisor(coord_location, 1);
-
+            glBindVertexArray(text_vao);
             program_1b->SetUniform("u_spriteSize", text_width, text_height);
             program_1b->SetUniform("u_spriteTextureSize", font_atlas.GetSpriteTextureWidth(),
                                    font_atlas.GetSpriteTextureHeight());
@@ -197,16 +214,7 @@ void Processor::Run()
 
         if (random.GetNextFloat() < 0.03f)
         {
-            decals_buffer.Bind();
-            const auto position_location = program_1b->GetAttributeLocation("in_letterPosition");
-            const auto coord_location = program_1b->GetAttributeLocation("in_letterTextureCoords");
-            glEnableVertexAttribArray(position_location);
-            glVertexAttribPointer(position_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)0);
-            glVertexAttribDivisor(position_location, 1);
-            glEnableVertexAttribArray(coord_location);
-            glVertexAttribPointer(coord_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)8);
-            glVertexAttribDivisor(coord_location, 1);
-
+            glBindVertexArray(decals_vao);
             program_1b->SetUniform("u_fontImage", 2);
             program_1b->SetUniform("u_spriteSize", decal_width, decal_height);
             program_1b->SetUniform("u_spriteTextureSize", decals_atlas.GetSpriteTextureWidth(),
