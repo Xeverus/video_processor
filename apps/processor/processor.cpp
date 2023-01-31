@@ -97,11 +97,8 @@ void Processor::Run()
 
     const auto text_height = 0.14f;
     const auto text_width = text_height * 0.6f;
-    auto text = vid_lib::sprite::GeometryGenerator::MakeVerticalText(
-        "JAN.29 2023", -0.85f, -0.8f, text_width, text_height, font_atlas);
-    const auto text_bottom = vid_lib::sprite::GeometryGenerator::MakeVerticalText(
-        "PM 6:41", -0.7f, -0.8f, text_width, text_height, font_atlas);
-    text.insert(text.end(), text_bottom.begin(), text_bottom.end());
+    const auto text = vid_lib::sprite::GeometryGenerator::MakeVerticalText(
+        "JAN.29 2023\nPM 6:41", -0.85f, -0.8f, text_width, text_height, font_atlas);
 
     const auto decal_width = 0.16f;
     const auto decal_height = decal_width * 2.5f;
@@ -113,7 +110,7 @@ void Processor::Run()
     glGenVertexArrays(1, &decals_vao);
 
     glBindVertexArray(text_vao);
-    vid_lib::opengl::buffer::Buffer text_buffer(text);
+    vid_lib::opengl::buffer::Buffer text_buffer(text.GetLetters());
     {
         text_buffer.Bind();
         glEnableVertexAttribArray(0);
@@ -178,7 +175,7 @@ void Processor::Run()
                 program_1b->SetUniform("u_spriteTextureSize", font_atlas.GetSpriteTextureWidth(),
                                        font_atlas.GetSpriteTextureHeight());
                 program_1b->SetUniform("u_spriteRotation", 3.14f / 2.0f);
-                glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, text.size());
+                glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, text.GetLength());
                 glFlush();
             }
 
@@ -230,13 +227,13 @@ void Processor::Run()
     }
 }
 
-std::vector<vid_lib::sprite::GeometryGenerator::SpriteVertex> Processor::MakeRandomlyPlacedSprites(
+std::vector<vid_lib::sprite::Sprite> Processor::MakeRandomlyPlacedSprites(
     const vid_lib::sprite::Atlas& atlas,
     const int sprite_count,
     const float sprite_screen_width,
     const float sprite_screen_height)
 {
-    std::vector<vid_lib::sprite::GeometryGenerator::SpriteVertex> decals;
+    std::vector<vid_lib::sprite::Sprite> decals;
     decals.reserve(sprite_count);
 
     const auto sprite_names = atlas.GetValidSpriteNames();
