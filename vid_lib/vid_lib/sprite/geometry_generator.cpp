@@ -3,7 +3,7 @@
 namespace vid_lib::sprite
 {
 
-SpriteBatch GeometryGenerator::MakeVerticalText(const std::string& characters,
+std::unique_ptr<SpriteBatch> GeometryGenerator::MakeVerticalText(const std::string& characters,
                                                 float screen_pos_x, const float screen_pos_y,
                                                 float sprite_width, float sprite_height,
                                                 const vid_lib::sprite::Atlas& atlas)
@@ -34,7 +34,7 @@ SpriteBatch GeometryGenerator::MakeVerticalText(const std::string& characters,
         ++sprite_index;
     }
 
-    return {std::move(letters), sprite_width, sprite_height};
+    return std::make_unique<SpriteBatch>(std::move(letters), sprite_width, sprite_height);
 }
 
 Sprite GeometryGenerator::MakeSprite(const Atlas::SpriteDescription& sprite_description,
@@ -52,6 +52,32 @@ Sprite GeometryGenerator::MakeSprite(const Atlas::SpriteDescription& sprite_desc
         FindMidPoint(sprite_description.texture_coord_x_start, sprite_description.texture_coord_x_end),
         FindMidPoint(sprite_description.texture_coord_y_start, sprite_description.texture_coord_y_end)
     };
+}
+
+std::unique_ptr<vid_lib::sprite::SpriteBatch>
+GeometryGenerator::MakeRandomlyPlacedSprites(const Atlas& atlas,
+                                             const int sprite_count,
+                                             const float sprite_screen_width,
+                                             const float sprite_screen_height,
+                                             math::Random& random_source)
+{
+    std::vector<vid_lib::sprite::Sprite> decals;
+    decals.reserve(sprite_count);
+
+    const auto sprite_names = atlas.GetValidSpriteNames();
+    for (auto i = 0; i < sprite_count; ++i)
+    {
+        const char decal_name = sprite_names[random_source.GetNextInt() % sprite_names.size()];
+        const auto sprite_description = atlas.GetSpriteDescription(decal_name);
+        const auto pos_x = (random_source.GetNextFloat() * 2.0f - 1.0f) * (1.0f - sprite_screen_width * 0.5f);
+        const auto pos_y = (random_source.GetNextFloat() * 2.0f - 1.0f) * (1.0f - sprite_screen_height * 0.5f);
+        const auto decal = vid_lib::sprite::GeometryGenerator::MakeSprite(sprite_description, pos_x, pos_y,
+                                                                          sprite_screen_width,
+                                                                          sprite_screen_height);
+        decals.push_back(decal);
+    }
+
+    return std::make_unique<SpriteBatch>(std::move(decals), sprite_screen_width, sprite_screen_height);
 }
 
 }

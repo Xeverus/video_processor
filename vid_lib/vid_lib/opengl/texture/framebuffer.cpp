@@ -7,7 +7,9 @@ namespace vid_lib::opengl::texture
 namespace
 {
 
-GLuint MakeOpenGlFramebuffer(const int width, const int height, const GLuint color_texture_id)
+GLuint MakeOpenGlFramebuffer(const int width,
+                             const int height,
+                             const GLuint color_texture_id)
 {
     GLuint framebuffer_id = 0;
     glGenFramebuffers(1, &framebuffer_id);
@@ -32,20 +34,25 @@ GLuint MakeOpenGlFramebuffer(const int width, const int height, const GLuint col
 
 }
 
-Framebuffer Framebuffer::MakeNew(const int width, const int height)
+std::unique_ptr<Framebuffer> Framebuffer::MakeNew(const int width,
+                                                  const int height)
 {
     GLuint color_texture_id = 0;
     glGenTextures(1, &color_texture_id);
     const auto framebuffer_id = MakeOpenGlFramebuffer(width, height, color_texture_id);
-    return Framebuffer(framebuffer_id, color_texture_id, width, height);
+    return std::unique_ptr<Framebuffer>(new Framebuffer(framebuffer_id, color_texture_id, width, height));
 }
 
-Framebuffer Framebuffer::WrapDefault(const int width, const int height)
+std::unique_ptr<Framebuffer> Framebuffer::WrapDefault(const int width,
+                                                      const int height)
 {
-    return Framebuffer(0, 0, width, height);
+    return std::unique_ptr<Framebuffer>(new Framebuffer(0, 0, width, height));
 }
 
-Framebuffer::Framebuffer(const GLuint framebuffer_id, const GLuint color_texture_id, const int width, const int height)
+Framebuffer::Framebuffer(const GLuint framebuffer_id,
+                         const GLuint color_texture_id,
+                         const int width,
+                         const int height)
     : framebuffer_id_(framebuffer_id)
     , color_texture_id_(color_texture_id)
     , width_(width)
