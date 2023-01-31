@@ -9,7 +9,7 @@
 #include <vid_lib/math/random.h>
 
 #include <vid_lib/opengl/debug/debug_messenger.h>
-#include <vid_lib/opengl/shader/shader_utils.h>
+#include <vid_lib/opengl/shader/program.h>
 #include <vid_lib/opengl/texture/framebuffer.h>
 
 #include "vid_lib/sprite/atlas.h"
@@ -88,18 +88,18 @@ void Processor::Run()
     film_margin_edges_ = vid_lib::math::Film::CalculateMarginEdges(input_movie.GetFrameHeight(),
                                                                    config_.film_margin_size, config_.film_margin_step);
 
-    const auto program_1a = vid_lib::opengl::shader::ShaderUtils::MakeProgramFromFiles(
-        "../../../assets/shaders/processor_1a.vs", "../../../assets/shaders/processor_1a.fs", {});
-    const auto program_1b = vid_lib::opengl::shader::ShaderUtils::MakeProgramFromFiles(
-        "../../../assets/shaders/processor_1b.vs", "../../../assets/shaders/processor_1b.fs",
+    auto program_1a = vid_lib::opengl::shader::Program::MakeFromFiles(
+        "../../../assets/shaders/processor/processor_1a.vs", "../../../assets/shaders/processor/processor_1a.fs", {});
+    auto program_1b = vid_lib::opengl::shader::Program::MakeFromFiles(
+        "../../../assets/shaders/processor/processor_1b.vs", "../../../assets/shaders/processor/processor_1b.fs",
         {
             {0, "in_letterPosition"},
             {1, "in_letterTextureCoords"}
         });
-    const auto program_1c = vid_lib::opengl::shader::ShaderUtils::MakeProgramFromFiles(
-        "../../../assets/shaders/processor_1c.vs", "../../../assets/shaders/processor_1c.fs", {});
-    const auto program_2a = vid_lib::opengl::shader::ShaderUtils::MakeProgramFromFiles(
-        "../../../assets/shaders/processor_2a.vs", "../../../assets/shaders/processor_2a.fs", {});
+    auto program_1c = vid_lib::opengl::shader::Program::MakeFromFiles(
+        "../../../assets/shaders/processor/processor_1c.vs", "../../../assets/shaders/processor/processor_1c.fs", {});
+    auto program_2a = vid_lib::opengl::shader::Program::MakeFromFiles(
+        "../../../assets/shaders/processor/processor_2a.vs", "../../../assets/shaders/processor/processor_2a.fs", {});
 
     auto input_image = input_movie.GetNextFrame();
     cv::Mat output_image(config_.output_movie_height, config_.output_movie_width, input_image.type());
@@ -166,27 +166,27 @@ void Processor::Run()
         LoadImageToOpenGlTexture(input_image, image_texture_id);
 
         // phase 1a - add margins, apply aspect
-        glUseProgram(program_1a);
-        glUniform1f(glGetUniformLocation(program_1a, "u_verticalScale"), vertical_scale);
-        glUniform1i(glGetUniformLocation(program_1a, "u_image"), 0);
-        glUniform3fv(glGetUniformLocation(program_1a, "u_filmMarginColor"), 1, film_margin_color_.data());
-        glUniform4fv(glGetUniformLocation(program_1a, "u_filmMarginEdges"), 1, film_margin_edges_.data());
+        program_1a->Use();
+        program_1a->SetUniform("u_verticalScale", vertical_scale);
+        program_1a->SetUniform("u_image", 0);
+        program_1a->SetUniform("u_filmMarginColor", film_margin_color_[0], film_margin_color_[1], film_margin_color_[2]);
+        program_1a->SetUniform("u_filmMarginEdges", film_margin_edges_[0], film_margin_edges_[1], film_margin_edges_[2], film_margin_edges_[3]);
 
         framebuffer_1a.Bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         glFlush();
 
         // phase 1b - add text and white decals
-        glUseProgram(program_1b);
-        glUniform1i(glGetUniformLocation(program_1b, "u_image"), 0);
-        glUniform1i(glGetUniformLocation(program_1b, "u_fontImage"), 1);
+        program_1b->Use();
+        program_1b->SetUniform("u_image", 0);
+        program_1b->SetUniform("u_fontImage", 1);
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         {
             glBindBuffer(GL_ARRAY_BUFFER, text_buffer);
-            const auto position_location = glGetAttribLocation(program_1b, "in_letterPosition");
-            const auto coord_location = glGetAttribLocation(program_1b, "in_letterTextureCoords");
+            const auto position_location = program_1b->GetAttributeLocation("in_letterPosition");
+            const auto coord_location = program_1b->GetAttributeLocation("in_letterTextureCoords");
             glEnableVertexAttribArray(position_location);
             glVertexAttribPointer(position_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)0);
             glVertexAttribDivisor(position_location, 1);
@@ -194,10 +194,10 @@ void Processor::Run()
             glVertexAttribPointer(coord_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)8);
             glVertexAttribDivisor(coord_location, 1);
 
-            glUniform2f(glGetUniformLocation(program_1b, "u_spriteSize"), text_width, text_height);
-            glUniform2f(glGetUniformLocation(program_1b, "u_spriteTextureSize"), font_atlas.GetSpriteTextureWidth(),
-                        font_atlas.GetSpriteTextureHeight());
-            glUniform1f(glGetUniformLocation(program_1b, "u_spriteRotation"), 3.14f / 2.0f);
+            program_1b->SetUniform("u_spriteSize", text_width, text_height);
+            program_1b->SetUniform("u_spriteTextureSize", font_atlas.GetSpriteTextureWidth(),
+                                   font_atlas.GetSpriteTextureHeight());
+            program_1b->SetUniform("u_spriteRotation", 3.14f / 2.0f);
             glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, text.size());
             glFlush();
         }
@@ -205,8 +205,8 @@ void Processor::Run()
         if (random.GetNextFloat() < 0.03f)
         {
             glBindBuffer(GL_ARRAY_BUFFER, decals_buffer);
-            const auto position_location = glGetAttribLocation(program_1b, "in_letterPosition");
-            const auto coord_location = glGetAttribLocation(program_1b, "in_letterTextureCoords");
+            const auto position_location = program_1b->GetAttributeLocation("in_letterPosition");
+            const auto coord_location = program_1b->GetAttributeLocation("in_letterTextureCoords");
             glEnableVertexAttribArray(position_location);
             glVertexAttribPointer(position_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)0);
             glVertexAttribDivisor(position_location, 1);
@@ -214,11 +214,11 @@ void Processor::Run()
             glVertexAttribPointer(coord_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)8);
             glVertexAttribDivisor(coord_location, 1);
 
-            glUniform1i(glGetUniformLocation(program_1b, "u_fontImage"), 2);
-            glUniform2f(glGetUniformLocation(program_1b, "u_spriteSize"), decal_width, decal_height);
-            glUniform2f(glGetUniformLocation(program_1b, "u_spriteTextureSize"), decals_atlas.GetSpriteTextureWidth(),
-                        decals_atlas.GetSpriteTextureHeight());
-            glUniform1f(glGetUniformLocation(program_1b, "u_spriteRotation"), 0.0f);
+            program_1b->SetUniform("u_fontImage", 2);
+            program_1b->SetUniform("u_spriteSize", decal_width, decal_height);
+            program_1b->SetUniform("u_spriteTextureSize", decals_atlas.GetSpriteTextureWidth(),
+                                   decals_atlas.GetSpriteTextureHeight());
+            program_1b->SetUniform("u_spriteRotation", 0.0f);
             const auto instance_number = 1;
             const auto first_instance = random.GetNextInt() % (decals.size() - instance_number);
             glDrawArraysInstancedBaseInstance(GL_TRIANGLE_STRIP, 0, 4, instance_number, first_instance);
@@ -227,17 +227,17 @@ void Processor::Run()
         glDisable(GL_BLEND);
 
         // phase 1c - apply postprocessing
-        glUseProgram(program_1c);
-        glUniform1i(glGetUniformLocation(program_1c, "u_image"), 0);
-        glUniform1f(glGetUniformLocation(program_1c, "u_time"), time);
+        program_1c->Use();
+        program_1c->SetUniform("u_image", 0);
+        program_1c->SetUniform("u_time", time);
         framebuffer_1a.BindTexture();
         framebuffer_1b.Bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         glFlush();
 
         // phase 2a - apply channel separation and rescaling
-        glUseProgram(program_2a);
-        glUniform1i(glGetUniformLocation(program_2a, "u_image"), 0);
+        program_2a->Use();
+        program_2a->SetUniform("u_image", 0);
         framebuffer_1b.BindTexture();
         framebuffer_2a.Bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
