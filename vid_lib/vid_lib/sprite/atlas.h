@@ -2,6 +2,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "vid_lib/opengl/opengl.h"
 
@@ -21,14 +22,13 @@ public:
 
 public:
     explicit Atlas(const std::string& filepath);
-
     explicit Atlas(std::istream& stream);
 
     const SpriteDescription& GetSpriteDescription(char sprite_name) const;
+    std::vector<char> GetValidSpriteNames() const;
 
-    const float GetSpriteTextureWidth() const;
-
-    const float GetSpriteTextureHeight() const;
+    float GetSpriteTextureWidth() const;
+    float GetSpriteTextureHeight() const;
 
 private:
     std::unordered_map<char, SpriteDescription> sprite_descriptions_;

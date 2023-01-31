@@ -61,14 +61,26 @@ const Atlas::SpriteDescription& Atlas::GetSpriteDescription(char sprite_name) co
     return iter->second;
 }
 
-const float Atlas::GetSpriteTextureWidth() const
+float Atlas::GetSpriteTextureWidth() const
 {
     return sprite_texture_width_;
 }
 
-const float Atlas::GetSpriteTextureHeight() const
+float Atlas::GetSpriteTextureHeight() const
 {
     return sprite_texture_height_;
+}
+
+std::vector<char> Atlas::GetValidSpriteNames() const
+{
+    std::vector<char> sprite_names;
+    sprite_names.reserve(sprite_descriptions_.size());
+    for (const auto& [name, description] : sprite_descriptions_)
+    {
+        sprite_names.push_back(name);
+    }
+
+    return sprite_names;
 }
 
 }

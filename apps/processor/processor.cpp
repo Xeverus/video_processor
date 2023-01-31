@@ -91,7 +91,8 @@ void Processor::Run()
     const auto font_atlas = vid_lib::sprite::Atlas("../../../assets/sprites/font_48x80.txt");
 
     glActiveTexture(GL_TEXTURE0 + 2);
-    const auto decals_texture = vid_lib::opengl::texture::Texture::MakeFromFile("../../../assets/sprites/decals_64x128.png");
+    const auto decals_texture = vid_lib::opengl::texture::Texture::MakeFromFile(
+        "../../../assets/sprites/decals_64x128.png");
     const auto decals_atlas = vid_lib::sprite::Atlas("../../../assets/sprites/decals_64x128.txt");
 
     const auto text_height = 0.14f;
@@ -102,24 +103,9 @@ void Processor::Run()
         "PM 6:41", -0.7f, -0.8f, text_width, text_height, font_atlas);
     text.insert(text.end(), text_bottom.begin(), text_bottom.end());
 
-    vid_lib::math::Random random;
-    std::vector<vid_lib::sprite::GeometryGenerator::SpriteVertex> decals;
-    decals.reserve(16);
     const auto decal_width = 0.16f;
     const auto decal_height = decal_width * 2.5f;
-    {
-        for (auto i = 0; i < 16; ++i)
-        {
-            const char decal_name = 'a' + static_cast<char>(random.GetNextInt() % 8);
-            const auto sprite_description = decals_atlas.GetSpriteDescription(decal_name);
-            const auto pos_x = (random.GetNextFloat() * 2.0f - 1.0f) * 0.8f;
-            const auto pos_y = (random.GetNextFloat() * 2.0f - 1.0f) * 0.8f;
-            const auto decal = vid_lib::sprite::GeometryGenerator::MakeSprite(sprite_description, pos_x, pos_y,
-                                                                              decal_width,
-                                                                              decal_height);
-            decals.push_back(decal);
-        }
-    }
+    const auto decals = MakeRandomlyPlacedSprites(decals_atlas, 16, decal_width, decal_height);
 
     GLuint text_vao;
     GLuint decals_vao;
@@ -196,7 +182,7 @@ void Processor::Run()
                 glFlush();
             }
 
-            if (random.GetNextFloat() < 0.03f)
+            if (random_source_.GetNextFloat() < 0.03f)
             {
                 glBindVertexArray(decals_vao);
                 program_1b->SetUniform("u_fontImage", 2);
@@ -205,7 +191,7 @@ void Processor::Run()
                                        decals_atlas.GetSpriteTextureHeight());
                 program_1b->SetUniform("u_spriteRotation", 0.0f);
                 const auto instance_number = 1;
-                const auto first_instance = random.GetNextInt() % (decals.size() - instance_number);
+                const auto first_instance = random_source_.GetNextInt() % (decals.size() - instance_number);
                 glDrawArraysInstancedBaseInstance(GL_TRIANGLE_STRIP, 0, 4, instance_number, first_instance);
                 glFlush();
             }
@@ -242,5 +228,30 @@ void Processor::Run()
 
         input_image = input_movie.GetNextFrame();
     }
+}
+
+std::vector<vid_lib::sprite::GeometryGenerator::SpriteVertex> Processor::MakeRandomlyPlacedSprites(
+    const vid_lib::sprite::Atlas& atlas,
+    const int sprite_count,
+    const float sprite_screen_width,
+    const float sprite_screen_height)
+{
+    std::vector<vid_lib::sprite::GeometryGenerator::SpriteVertex> decals;
+    decals.reserve(sprite_count);
+
+    const auto sprite_names = atlas.GetValidSpriteNames();
+    for (auto i = 0; i < sprite_count; ++i)
+    {
+        const char decal_name = sprite_names[random_source_.GetNextInt() % sprite_names.size()];
+        const auto sprite_description = atlas.GetSpriteDescription(decal_name);
+        const auto pos_x = (random_source_.GetNextFloat() * 2.0f - 1.0f) * (1.0f - sprite_screen_width * 0.5f);
+        const auto pos_y = (random_source_.GetNextFloat() * 2.0f - 1.0f) * (1.0f - sprite_screen_height * 0.5f);
+        const auto decal = vid_lib::sprite::GeometryGenerator::MakeSprite(sprite_description, pos_x, pos_y,
+                                                                          sprite_screen_width,
+                                                                          sprite_screen_height);
+        decals.push_back(decal);
+    }
+
+    return decals;
 }
 
