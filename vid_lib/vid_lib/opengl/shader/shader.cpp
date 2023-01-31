@@ -1,4 +1,4 @@
-#include <vid_lib/opengl/shader/shader_utils.h>
+#include <vid_lib/opengl/shader/shader.h>
 
 #include <sstream>
 #include <stdexcept>

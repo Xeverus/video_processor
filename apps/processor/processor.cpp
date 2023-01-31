@@ -2,8 +2,6 @@
 
 #include <fstream>
 
-#include <opencv2/imgcodecs.hpp>
-
 #include <vid_lib/math/aspect_ratio.h>
 #include <vid_lib/math/film.h>
 #include <vid_lib/math/random.h>
@@ -12,6 +10,7 @@
 #include <vid_lib/opengl/debug/debug_messenger.h>
 #include <vid_lib/opengl/shader/program.h>
 #include <vid_lib/opengl/texture/framebuffer.h>
+#include <vid_lib/opengl/texture/texture.h>
 
 #include "vid_lib/sprite/atlas.h"
 #include "vid_lib/sprite/geometry_generator.h"
@@ -36,16 +35,6 @@ Config LoadConfig(const int argc, char* argv[])
         };
 }
 
-void LoadImageToOpenGlTexture(cv::Mat& image, const GLuint texture_id)
-{
-    glBindTexture(GL_TEXTURE_2D, texture_id);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, image.cols, image.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, image.data);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-}
-
 }
 
 Processor::Processor(const int argc, char* argv[])
@@ -67,13 +56,6 @@ void Processor::Run()
     const auto vertical_scale = vid_lib::math::AspectRatio::CalculateVerticalScale(
         input_movie.GetFrameWidth(), input_movie.GetFrameHeight(), config_.output_movie_width,
         config_.output_movie_height);
-
-    GLuint image_texture_id = 0;
-    GLuint font_texture_id = 0;
-    GLuint decals_texture_id = 0;
-    glGenTextures(1, &image_texture_id);
-    glGenTextures(1, &font_texture_id);
-    glGenTextures(1, &decals_texture_id);
 
     // make buffers
     glfwSetWindowSize(glfw_window_, config_.output_movie_width, config_.output_movie_height);
@@ -105,15 +87,15 @@ void Processor::Run()
     auto input_image = input_movie.GetNextFrame();
     cv::Mat output_image(config_.output_movie_height, config_.output_movie_width, input_image.type());
 
-    const auto font_atlas = vid_lib::sprite::Atlas("../../../assets/sprites/font_48x80.txt");
-    cv::Mat font_image = cv::imread("../../../assets/sprites/font_48x80.png");
-    glActiveTexture(GL_TEXTURE0 + 1);
-    LoadImageToOpenGlTexture(font_image, font_texture_id);
+    const auto input_image_texture = vid_lib::opengl::texture::Texture::MakeEmpty();
 
-    const auto decals_atlas = vid_lib::sprite::Atlas("../../../assets/sprites/decals_64x128.txt");
-    cv::Mat decals_image = cv::imread("../../../assets/sprites/decals_64x128.png");
+    glActiveTexture(GL_TEXTURE0 + 1);
+    const auto font_texture = vid_lib::opengl::texture::Texture::MakeFromFile("../../../assets/sprites/font_48x80.png");
+    const auto font_atlas = vid_lib::sprite::Atlas("../../../assets/sprites/font_48x80.txt");
+
     glActiveTexture(GL_TEXTURE0 + 2);
-    LoadImageToOpenGlTexture(decals_image, decals_texture_id);
+    const auto decals_texture = vid_lib::opengl::texture::Texture::MakeFromFile("../../../assets/sprites/decals_64x128.png");
+    const auto decals_atlas = vid_lib::sprite::Atlas("../../../assets/sprites/decals_64x128.txt");
 
     const auto text_height = 0.14f;
     const auto text_width = text_height * 0.6f;
@@ -178,7 +160,7 @@ void Processor::Run()
         time += step;
 
         glActiveTexture(GL_TEXTURE0 + 0);
-        LoadImageToOpenGlTexture(input_image, image_texture_id);
+        input_image_texture->Update(input_image);
 
         // phase 1a - add margins, apply aspect
         program_1a->Use();

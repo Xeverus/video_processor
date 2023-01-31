@@ -7,7 +7,7 @@
 #include <vid_lib/math/random.h>
 
 #include <vid_lib/opengl/debug/debug_messenger.h>
-#include <vid_lib/opengl/shader/shader_utils.h>
+#include <vid_lib/opengl/shader/shader.h>
 
 #include <vid_lib/video/video_reader.h>
 

@@ -5,7 +5,7 @@
 
 #include <vid_lib/filesystem/binary_file.h>
 
-#include <vid_lib/opengl/shader/shader_utils.h>
+#include <vid_lib/opengl/shader/shader.h>
 
 namespace vid_lib::opengl::shader
 {
