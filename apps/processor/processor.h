@@ -63,15 +63,18 @@ private:
     float ComputeVerticalScale(int input_movie_width,
                                int input_movie_height) const;
 
-    // phase 1a - add margins, apply aspect
+    // add margins, apply aspect
     void RenderFirstPass();
 
-    // phase 1b - add text and white decals
+    // add text
     void RenderSecondPass();
 
-    // phase 1c - apply postprocessing
+    // add white decals
     void RenderThirdPass();
 
-    // phase 2a - apply channel separation and rescaling
+    // apply postprocessing
     void RenderFourthPass();
+
+    // apply channel separation and rescaling
+    void RenderFifthPass();
 };

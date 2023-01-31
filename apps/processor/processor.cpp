@@ -113,6 +113,7 @@ void Processor::Run()
         RenderSecondPass();
         RenderThirdPass();
         RenderFourthPass();
+        RenderFifthPass();
 
         glReadPixels(0, 0, config_.output_movie_width, config_.output_movie_height, GL_BGR, GL_UNSIGNED_BYTE,
                      output_image.data);
@@ -163,7 +164,10 @@ void Processor::RenderSecondPass()
         text_buffer_array_->Render();
         glFlush();
     }
+}
 
+void Processor::RenderThirdPass()
+{
     if (random_source_.GetNextFloat() < 0.03f)
     {
         program_1b_->SetUniform("u_fontImage", 2);
@@ -180,7 +184,7 @@ void Processor::RenderSecondPass()
     glDisable(GL_BLEND);
 }
 
-void Processor::RenderThirdPass()
+void Processor::RenderFourthPass()
 {
     program_1c_->Use();
     program_1c_->SetUniform("u_image", 0);
@@ -191,9 +195,8 @@ void Processor::RenderThirdPass()
     glFlush();
 }
 
-void Processor::RenderFourthPass()
+void Processor::RenderFifthPass()
 {
-
     program_2a_->Use();
     program_2a_->SetUniform("u_image", 0);
     second_framebuffer_->BindTexture();
