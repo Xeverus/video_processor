@@ -3,10 +3,10 @@
 namespace vid_lib::sprite
 {
 
-Text GeometryGenerator::MakeVerticalText(const std::string& characters,
-                                         float screen_pos_x, const float screen_pos_y,
-                                         float sprite_width, float sprite_height,
-                                         const vid_lib::sprite::Atlas& atlas)
+SpriteBatch GeometryGenerator::MakeVerticalText(const std::string& characters,
+                                                float screen_pos_x, const float screen_pos_y,
+                                                float sprite_width, float sprite_height,
+                                                const vid_lib::sprite::Atlas& atlas)
 {
     std::swap(sprite_width, sprite_height);
 

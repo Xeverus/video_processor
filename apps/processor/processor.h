@@ -9,7 +9,7 @@
 #include <vid_lib/opengl/opengl.h>
 
 #include <vid_lib/sprite/atlas.h>
-#include <vid_lib/sprite/sprite.h>
+#include <vid_lib/sprite/sprite_batch.h>
 
 #include <config.h>
 
@@ -31,7 +31,7 @@ private:
     std::array<float, 4> film_margin_edges_ = {0.0f};
 
 private:
-    std::vector<vid_lib::sprite::Sprite> MakeRandomlyPlacedSprites(
+    vid_lib::sprite::SpriteBatch MakeRandomlyPlacedSprites(
         const vid_lib::sprite::Atlas& atlas,
         int sprite_count,
         float sprite_width,

@@ -51,16 +51,13 @@ void Processor::Run()
     vid_lib::video::VideoWriter output_movie(config_.output_movie_filepath, config_.output_movie_width,
                                              config_.output_movie_height, config_.output_movie_fps);
 
-    // make buffers
-    glfwSetWindowSize(glfw_window_, config_.output_movie_width, config_.output_movie_height);
-
     const auto framebuffer_1a = vid_lib::opengl::texture::Framebuffer::MakeNew(
         input_movie.GetFrameWidth(), input_movie.GetFrameHeight());
     const auto framebuffer_1b = vid_lib::opengl::texture::Framebuffer::MakeNew(
         input_movie.GetFrameWidth(), input_movie.GetFrameHeight());
+    glfwSetWindowSize(glfw_window_, config_.output_movie_width, config_.output_movie_height);
     const auto framebuffer_2a = vid_lib::opengl::texture::Framebuffer::WrapDefault(
         config_.output_movie_width, config_.output_movie_height);
-    //
 
     film_margin_edges_ = vid_lib::math::Film::CalculateMarginEdges(input_movie.GetFrameHeight(),
                                                                    config_.film_margin_size, config_.film_margin_step);
@@ -98,8 +95,8 @@ void Processor::Run()
     const auto decal_height = decal_width * 2.5f;
     const auto decals = MakeRandomlyPlacedSprites(decals_atlas, 16, decal_width, decal_height);
 
-    vid_lib::opengl::buffer::SpriteBufferArray text_buffer_array(text.GetLetters());
-    vid_lib::opengl::buffer::SpriteBufferArray decals_buffer_array(decals);
+    vid_lib::opengl::buffer::SpriteBufferArray text_buffer_array(text.GetSprites());
+    vid_lib::opengl::buffer::SpriteBufferArray decals_buffer_array(decals.GetSprites());
 
     const auto step = 0.73432117f;
     auto time = 0.0f;
@@ -155,7 +152,7 @@ void Processor::Run()
                                        decals_atlas.GetSpriteTextureHeight());
                 program_1b->SetUniform("u_spriteRotation", 0.0f);
                 const auto instance_number = 1;
-                const auto first_instance = random_source_.GetNextInt() % (decals.size() - instance_number);
+                const auto first_instance = random_source_.GetNextInt() % (decals.GetSpriteCount() - instance_number);
                 decals_buffer_array.Render(first_instance, instance_number);
                 glFlush();
             }
@@ -194,7 +191,7 @@ void Processor::Run()
     }
 }
 
-std::vector<vid_lib::sprite::Sprite> Processor::MakeRandomlyPlacedSprites(
+vid_lib::sprite::SpriteBatch Processor::MakeRandomlyPlacedSprites(
     const vid_lib::sprite::Atlas& atlas,
     const int sprite_count,
     const float sprite_screen_width,
@@ -216,10 +213,11 @@ std::vector<vid_lib::sprite::Sprite> Processor::MakeRandomlyPlacedSprites(
         decals.push_back(decal);
     }
 
-    return decals;
+    return {std::move(decals), sprite_screen_width, sprite_screen_height};
 }
 
-float Processor::ComputeVerticalScale(int input_movie_width, int input_movie_height) const
+float Processor::ComputeVerticalScale(const int input_movie_width,
+                                      const int input_movie_height) const
 {
     return vid_lib::math::AspectRatio::CalculateVerticalScale(
         input_movie_width, input_movie_height,
