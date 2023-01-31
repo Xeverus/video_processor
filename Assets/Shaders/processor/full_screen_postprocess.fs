@@ -155,7 +155,7 @@ vec3 addLightArtifacts(vec3 color, vec2 textureCoords, float time, float amplitu
 
 vec2 addVerticalDistortion(vec2 textureCoords, float time, float amplitude)
 {
-    vec2 fbmArg = vec2(6.0, 0.0) * (textureCoords + vec2(time * 0.04, 0.0));
+    vec2 fbmArg = vec2(32.0, 0.0) * (textureCoords + vec2(time * 0.04, 0.0));
     textureCoords.y += (fbm(fbmArg) - 0.5) * amplitude;
     return textureCoords;
 }
@@ -164,7 +164,7 @@ void main()
 {
     vec2 imageTexelSize = 1.0 / textureSize(u_image, 0);
 
-    vec2 textureCoords = addVerticalDistortion(v_textureCoords, u_time, imageTexelSize.y * 4.0f);
+    vec2 textureCoords = addVerticalDistortion(v_textureCoords, u_time, imageTexelSize.y * 1.75f);
 
     vec3 color = textureWithBlur5x5(u_image, textureCoords, imageTexelSize).xyz;
     color = addLightArtifacts(color, textureCoords, u_time, 0.025);
