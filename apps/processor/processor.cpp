@@ -84,9 +84,6 @@ void Processor::Run()
         "../../../assets/shaders/processor/full_screen.vs",
         "../../../assets/shaders/processor/full_screen_channels_separation.fs");
 
-    auto input_image = input_movie.GetNextFrame();
-    cv::Mat output_image(config_.output_movie_height, config_.output_movie_width, input_image.type());
-
     const auto input_image_texture = vid_lib::opengl::texture::Texture::MakeEmpty();
 
     glActiveTexture(GL_TEXTURE0 + 1);
@@ -155,6 +152,9 @@ void Processor::Run()
 
     const auto step = 0.73432117f;
     auto time = 0.0f;
+
+    auto input_image = input_movie.GetNextFrame();
+    cv::Mat output_image(config_.output_movie_height, config_.output_movie_width, input_image.type());
     while (!glfwWindowShouldClose(glfw_window_) && !input_image.empty())
     {
         time += step;
@@ -163,64 +163,76 @@ void Processor::Run()
         input_image_texture->Update(input_image);
 
         // phase 1a - add margins, apply aspect
-        program_1a->Use();
-        program_1a->SetUniform("u_verticalScale", vertical_scale);
-        program_1a->SetUniform("u_image", 0);
-        program_1a->SetUniform("u_filmMarginColor", film_margin_color_[0], film_margin_color_[1], film_margin_color_[2]);
-        program_1a->SetUniform("u_filmMarginEdges", film_margin_edges_[0], film_margin_edges_[1], film_margin_edges_[2], film_margin_edges_[3]);
+        {
+            program_1a->Use();
+            program_1a->SetUniform("u_verticalScale", vertical_scale);
+            program_1a->SetUniform("u_image", 0);
+            program_1a->SetUniform("u_filmMarginColor", film_margin_color_[0], film_margin_color_[1],
+                                   film_margin_color_[2]);
+            program_1a->SetUniform("u_filmMarginEdges", film_margin_edges_[0], film_margin_edges_[1],
+                                   film_margin_edges_[2], film_margin_edges_[3]);
 
-        framebuffer_1a.Bind();
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        glFlush();
+            framebuffer_1a.Bind();
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            glFlush();
+        }
 
         // phase 1b - add text and white decals
-        program_1b->Use();
-        program_1b->SetUniform("u_image", 0);
-        program_1b->SetUniform("u_fontImage", 1);
-
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         {
-            glBindVertexArray(text_vao);
-            program_1b->SetUniform("u_spriteScreenSize", text_width, text_height);
-            program_1b->SetUniform("u_spriteTextureSize", font_atlas.GetSpriteTextureWidth(),
-                                   font_atlas.GetSpriteTextureHeight());
-            program_1b->SetUniform("u_spriteRotation", 3.14f / 2.0f);
-            glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, text.size());
-            glFlush();
-        }
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        if (random.GetNextFloat() < 0.03f)
-        {
-            glBindVertexArray(decals_vao);
-            program_1b->SetUniform("u_fontImage", 2);
-            program_1b->SetUniform("u_spriteScreenSize", decal_width, decal_height);
-            program_1b->SetUniform("u_spriteTextureSize", decals_atlas.GetSpriteTextureWidth(),
-                                   decals_atlas.GetSpriteTextureHeight());
-            program_1b->SetUniform("u_spriteRotation", 0.0f);
-            const auto instance_number = 1;
-            const auto first_instance = random.GetNextInt() % (decals.size() - instance_number);
-            glDrawArraysInstancedBaseInstance(GL_TRIANGLE_STRIP, 0, 4, instance_number, first_instance);
-            glFlush();
+            program_1b->Use();
+            program_1b->SetUniform("u_image", 0);
+            program_1b->SetUniform("u_fontImage", 1);
+
+            {
+                glBindVertexArray(text_vao);
+                program_1b->SetUniform("u_spriteScreenSize", text_width, text_height);
+                program_1b->SetUniform("u_spriteTextureSize", font_atlas.GetSpriteTextureWidth(),
+                                       font_atlas.GetSpriteTextureHeight());
+                program_1b->SetUniform("u_spriteRotation", 3.14f / 2.0f);
+                glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, text.size());
+                glFlush();
+            }
+
+            if (random.GetNextFloat() < 0.03f)
+            {
+                glBindVertexArray(decals_vao);
+                program_1b->SetUniform("u_fontImage", 2);
+                program_1b->SetUniform("u_spriteScreenSize", decal_width, decal_height);
+                program_1b->SetUniform("u_spriteTextureSize", decals_atlas.GetSpriteTextureWidth(),
+                                       decals_atlas.GetSpriteTextureHeight());
+                program_1b->SetUniform("u_spriteRotation", 0.0f);
+                const auto instance_number = 1;
+                const auto first_instance = random.GetNextInt() % (decals.size() - instance_number);
+                glDrawArraysInstancedBaseInstance(GL_TRIANGLE_STRIP, 0, 4, instance_number, first_instance);
+                glFlush();
+            }
+
+            glDisable(GL_BLEND);
         }
-        glDisable(GL_BLEND);
 
         // phase 1c - apply postprocessing
-        program_1c->Use();
-        program_1c->SetUniform("u_image", 0);
-        program_1c->SetUniform("u_time", time);
-        framebuffer_1a.BindTexture();
-        framebuffer_1b.Bind();
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        glFlush();
+        {
+            program_1c->Use();
+            program_1c->SetUniform("u_image", 0);
+            program_1c->SetUniform("u_time", time);
+            framebuffer_1a.BindTexture();
+            framebuffer_1b.Bind();
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            glFlush();
+        }
 
         // phase 2a - apply channel separation and rescaling
-        program_2a->Use();
-        program_2a->SetUniform("u_image", 0);
-        framebuffer_1b.BindTexture();
-        framebuffer_2a.Bind();
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        glFlush();
+        {
+            program_2a->Use();
+            program_2a->SetUniform("u_image", 0);
+            framebuffer_1b.BindTexture();
+            framebuffer_2a.Bind();
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            glFlush();
+        }
 
         glReadPixels(0, 0, config_.output_movie_width, config_.output_movie_height, GL_BGR, GL_UNSIGNED_BYTE,
                      output_image.data);
