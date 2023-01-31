@@ -49,6 +49,7 @@ private:
     std::unique_ptr<vid_lib::sprite::SpriteBatch> text_;
     std::unique_ptr<vid_lib::sprite::SpriteBatch> decals_;
 
+    float time_step_;
     float time_;
 
     std::array<float, 3> film_margin_color_ = {0.15f, 0.08f, 0.0f};
@@ -60,8 +61,14 @@ private:
     float decal_sprite_screen_height_;
 
 private:
-    float ComputeVerticalScale(int input_movie_width,
-                               int input_movie_height) const;
+    void ComputeParameters(int input_movie_width, int input_movie_height);
+    void MakeTextures();
+    void MakeFramebuffers(int width, int height);
+    void BuildPrograms();
+    void MakeTextBufferArray();
+    void MakeDecalsBufferArray();
+
+    void UpdateTime();
 
     // add margins, apply aspect
     void RenderFirstPass();
