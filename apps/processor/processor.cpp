@@ -4,15 +4,13 @@
 
 #include <vid_lib/math/aspect_ratio.h>
 #include <vid_lib/math/film.h>
-#include <vid_lib/math/random.h>
 
-#include <vid_lib/opengl/buffer/buffer.h>
+#include <vid_lib/opengl/buffer/sprite_buffer_array.h>
 #include <vid_lib/opengl/debug/debug_messenger.h>
 #include <vid_lib/opengl/shader/program.h>
 #include <vid_lib/opengl/texture/framebuffer.h>
 #include <vid_lib/opengl/texture/texture.h>
 
-#include "vid_lib/sprite/atlas.h"
 #include "vid_lib/sprite/geometry_generator.h"
 
 #include <vid_lib/video/video_reader.h>
@@ -52,10 +50,6 @@ void Processor::Run()
     vid_lib::video::VideoReader input_movie(config_.input_movie_filepath);
     vid_lib::video::VideoWriter output_movie(config_.output_movie_filepath, config_.output_movie_width,
                                              config_.output_movie_height, config_.output_movie_fps);
-
-    const auto vertical_scale = vid_lib::math::AspectRatio::CalculateVerticalScale(
-        input_movie.GetFrameWidth(), input_movie.GetFrameHeight(), config_.output_movie_width,
-        config_.output_movie_height);
 
     // make buffers
     glfwSetWindowSize(glfw_window_, config_.output_movie_width, config_.output_movie_height);
@@ -104,37 +98,13 @@ void Processor::Run()
     const auto decal_height = decal_width * 2.5f;
     const auto decals = MakeRandomlyPlacedSprites(decals_atlas, 16, decal_width, decal_height);
 
-    GLuint text_vao;
-    GLuint decals_vao;
-    glGenVertexArrays(1, &text_vao);
-    glGenVertexArrays(1, &decals_vao);
-
-    glBindVertexArray(text_vao);
-    vid_lib::opengl::buffer::Buffer text_buffer(text.GetLetters());
-    {
-        text_buffer.Bind();
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 16, (const void*)0);
-        glVertexAttribDivisor(0, 1);
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 16, (const void*)8);
-        glVertexAttribDivisor(1, 1);
-    }
-
-    glBindVertexArray(decals_vao);
-    vid_lib::opengl::buffer::Buffer decals_buffer(decals);
-    {
-        decals_buffer.Bind();
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 16, (const void*)0);
-        glVertexAttribDivisor(0, 1);
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 16, (const void*)8);
-        glVertexAttribDivisor(1, 1);
-    }
+    vid_lib::opengl::buffer::SpriteBufferArray text_buffer_array(text.GetLetters());
+    vid_lib::opengl::buffer::SpriteBufferArray decals_buffer_array(decals);
 
     const auto step = 0.73432117f;
     auto time = 0.0f;
+
+    const auto vertical_scale = ComputeVerticalScale(input_movie.GetFrameWidth(), input_movie.GetFrameHeight());
 
     auto input_image = input_movie.GetNextFrame();
     cv::Mat output_image(config_.output_movie_height, config_.output_movie_width, input_image.type());
@@ -166,22 +136,19 @@ void Processor::Run()
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
             program_1b->Use();
-            program_1b->SetUniform("u_image", 0);
-            program_1b->SetUniform("u_fontImage", 1);
-
             {
-                glBindVertexArray(text_vao);
+                program_1b->SetUniform("u_image", 0);
+                program_1b->SetUniform("u_fontImage", 1);
                 program_1b->SetUniform("u_spriteScreenSize", text_width, text_height);
                 program_1b->SetUniform("u_spriteTextureSize", font_atlas.GetSpriteTextureWidth(),
                                        font_atlas.GetSpriteTextureHeight());
                 program_1b->SetUniform("u_spriteRotation", 3.14f / 2.0f);
-                glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, text.GetLength());
+                text_buffer_array.Render();
                 glFlush();
             }
 
             if (random_source_.GetNextFloat() < 0.03f)
             {
-                glBindVertexArray(decals_vao);
                 program_1b->SetUniform("u_fontImage", 2);
                 program_1b->SetUniform("u_spriteScreenSize", decal_width, decal_height);
                 program_1b->SetUniform("u_spriteTextureSize", decals_atlas.GetSpriteTextureWidth(),
@@ -189,7 +156,7 @@ void Processor::Run()
                 program_1b->SetUniform("u_spriteRotation", 0.0f);
                 const auto instance_number = 1;
                 const auto first_instance = random_source_.GetNextInt() % (decals.size() - instance_number);
-                glDrawArraysInstancedBaseInstance(GL_TRIANGLE_STRIP, 0, 4, instance_number, first_instance);
+                decals_buffer_array.Render(first_instance, instance_number);
                 glFlush();
             }
 
@@ -250,5 +217,12 @@ std::vector<vid_lib::sprite::Sprite> Processor::MakeRandomlyPlacedSprites(
     }
 
     return decals;
+}
+
+float Processor::ComputeVerticalScale(int input_movie_width, int input_movie_height) const
+{
+    return vid_lib::math::AspectRatio::CalculateVerticalScale(
+        input_movie_width, input_movie_height,
+        config_.output_movie_width, config_.output_movie_height);
 }
 

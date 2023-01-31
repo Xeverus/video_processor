@@ -36,4 +36,6 @@ private:
         int sprite_count,
         float sprite_width,
         float sprite_height);
+
+    float ComputeVerticalScale(int input_movie_width, int input_movie_height) const;
 };
