@@ -30,11 +30,8 @@ public:
     ~Program();
 
     Program(const Program& other) = delete;
-
-    Program operator=(const Program& other) = delete;
-
     Program(Program&& other) = default;
-
+    Program operator=(const Program& other) = delete;
     Program& operator=(Program&& other) = default;
 
     void Use() const;

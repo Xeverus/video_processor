@@ -8,6 +8,7 @@
 #include <vid_lib/math/film.h>
 #include <vid_lib/math/random.h>
 
+#include <vid_lib/opengl/buffer/buffer.h>
 #include <vid_lib/opengl/debug/debug_messenger.h>
 #include <vid_lib/opengl/shader/program.h>
 #include <vid_lib/opengl/texture/framebuffer.h>
@@ -145,16 +146,8 @@ void Processor::Run()
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
-    ////
-    GLuint text_buffer;
-    GLuint decals_buffer;
-    glGenBuffers(1, &text_buffer);
-    glGenBuffers(1, &decals_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, text_buffer);
-    glBufferData(GL_ARRAY_BUFFER, text.size() * sizeof(text[0]), text.data(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, decals_buffer);
-    glBufferData(GL_ARRAY_BUFFER, decals.size() * sizeof(decals[0]), decals.data(), GL_STATIC_DRAW);
-    ////
+    vid_lib::opengl::buffer::Buffer text_buffer(text);
+    vid_lib::opengl::buffer::Buffer decals_buffer(decals);
 
     const auto step = 0.73432117f;
     auto time = 0.0f;
@@ -184,7 +177,7 @@ void Processor::Run()
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         {
-            glBindBuffer(GL_ARRAY_BUFFER, text_buffer);
+            text_buffer.Bind();
             const auto position_location = program_1b->GetAttributeLocation("in_letterPosition");
             const auto coord_location = program_1b->GetAttributeLocation("in_letterTextureCoords");
             glEnableVertexAttribArray(position_location);
@@ -204,7 +197,7 @@ void Processor::Run()
 
         if (random.GetNextFloat() < 0.03f)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, decals_buffer);
+            decals_buffer.Bind();
             const auto position_location = program_1b->GetAttributeLocation("in_letterPosition");
             const auto coord_location = program_1b->GetAttributeLocation("in_letterTextureCoords");
             glEnableVertexAttribArray(position_location);
