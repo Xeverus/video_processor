@@ -20,16 +20,14 @@ public:
     };
 
 public:
-    static std::vector<SpriteVertex>
-    MakeVerticalText(const std::string& letters,
-                     float screen_pos_x, float screen_pos_y,
-                     float sprite_width, float sprite_height,
-                     const Atlas& atlas);
+    static std::vector<SpriteVertex> MakeVerticalText(const std::string& letters,
+                                                      float screen_pos_x, float screen_pos_y,
+                                                      float sprite_width, float sprite_height,
+                                                      const Atlas& atlas);
 
-    static SpriteVertex
-    MakeSprite(const Atlas::SpriteDescription& sprite_description,
-               float screen_pos_x, float screen_pos_y,
-               float sprite_width, float sprite_height);
+    static SpriteVertex MakeSprite(const Atlas::SpriteDescription& sprite_description,
+                                   float screen_pos_x, float screen_pos_y,
+                                   float sprite_width, float sprite_height);
 };
 
 }

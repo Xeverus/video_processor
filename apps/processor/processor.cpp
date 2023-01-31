@@ -90,17 +90,17 @@ void Processor::Run()
                                                                    config_.film_margin_size, config_.film_margin_step);
 
     auto program_1a = vid_lib::opengl::shader::Program::MakeFromFiles(
-        "../../../assets/shaders/processor/processor_1a.vs", "../../../assets/shaders/processor/processor_1a.fs", {});
+        "../../../assets/shaders/processor/full_screen_vertical_scale.vs",
+        "../../../assets/shaders/processor/full_screen_film_margins.fs");
     auto program_1b = vid_lib::opengl::shader::Program::MakeFromFiles(
-        "../../../assets/shaders/processor/processor_1b.vs", "../../../assets/shaders/processor/processor_1b.fs",
-        {
-            {0, "in_letterPosition"},
-            {1, "in_letterTextureCoords"}
-        });
+        "../../../assets/shaders/processor/sprites.vs",
+        "../../../assets/shaders/processor/sprites.fs");
     auto program_1c = vid_lib::opengl::shader::Program::MakeFromFiles(
-        "../../../assets/shaders/processor/processor_1c.vs", "../../../assets/shaders/processor/processor_1c.fs", {});
+        "../../../assets/shaders/processor/full_screen.vs",
+        "../../../assets/shaders/processor/full_screen_postprocess.fs");
     auto program_2a = vid_lib::opengl::shader::Program::MakeFromFiles(
-        "../../../assets/shaders/processor/processor_2a.vs", "../../../assets/shaders/processor/processor_2a.fs", {});
+        "../../../assets/shaders/processor/full_screen.vs",
+        "../../../assets/shaders/processor/full_screen_channels_separation.fs");
 
     auto input_image = input_movie.GetNextFrame();
     cv::Mat output_image(config_.output_movie_height, config_.output_movie_width, input_image.type());
@@ -151,28 +151,24 @@ void Processor::Run()
     vid_lib::opengl::buffer::Buffer text_buffer(text);
     {
         text_buffer.Bind();
-        const auto position_location = program_1b->GetAttributeLocation("in_letterPosition");
-        const auto coord_location = program_1b->GetAttributeLocation("in_letterTextureCoords");
-        glEnableVertexAttribArray(position_location);
-        glVertexAttribPointer(position_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)0);
-        glVertexAttribDivisor(position_location, 1);
-        glEnableVertexAttribArray(coord_location);
-        glVertexAttribPointer(coord_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)8);
-        glVertexAttribDivisor(coord_location, 1);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 16, (const void*)0);
+        glVertexAttribDivisor(0, 1);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 16, (const void*)8);
+        glVertexAttribDivisor(1, 1);
     }
 
     glBindVertexArray(decals_vao);
     vid_lib::opengl::buffer::Buffer decals_buffer(decals);
     {
         decals_buffer.Bind();
-        const auto position_location = program_1b->GetAttributeLocation("in_letterPosition");
-        const auto coord_location = program_1b->GetAttributeLocation("in_letterTextureCoords");
-        glEnableVertexAttribArray(position_location);
-        glVertexAttribPointer(position_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)0);
-        glVertexAttribDivisor(position_location, 1);
-        glEnableVertexAttribArray(coord_location);
-        glVertexAttribPointer(coord_location, 2, GL_FLOAT, GL_FALSE, 16, (const void*)8);
-        glVertexAttribDivisor(coord_location, 1);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 16, (const void*)0);
+        glVertexAttribDivisor(0, 1);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 16, (const void*)8);
+        glVertexAttribDivisor(1, 1);
     }
 
     const auto step = 0.73432117f;
@@ -204,7 +200,7 @@ void Processor::Run()
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         {
             glBindVertexArray(text_vao);
-            program_1b->SetUniform("u_spriteSize", text_width, text_height);
+            program_1b->SetUniform("u_spriteScreenSize", text_width, text_height);
             program_1b->SetUniform("u_spriteTextureSize", font_atlas.GetSpriteTextureWidth(),
                                    font_atlas.GetSpriteTextureHeight());
             program_1b->SetUniform("u_spriteRotation", 3.14f / 2.0f);
@@ -216,7 +212,7 @@ void Processor::Run()
         {
             glBindVertexArray(decals_vao);
             program_1b->SetUniform("u_fontImage", 2);
-            program_1b->SetUniform("u_spriteSize", decal_width, decal_height);
+            program_1b->SetUniform("u_spriteScreenSize", decal_width, decal_height);
             program_1b->SetUniform("u_spriteTextureSize", decals_atlas.GetSpriteTextureWidth(),
                                    decals_atlas.GetSpriteTextureHeight());
             program_1b->SetUniform("u_spriteRotation", 0.0f);

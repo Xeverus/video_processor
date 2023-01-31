@@ -1,6 +1,6 @@
 #version 460 core
 
-uniform sampler2D u_image;
+layout(binding = 0) uniform sampler2D u_image;
 uniform float u_time;
 
 in vec2 v_textureCoords;

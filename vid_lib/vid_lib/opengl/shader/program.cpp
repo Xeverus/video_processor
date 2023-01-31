@@ -10,18 +10,12 @@
 namespace vid_lib::opengl::shader
 {
 
-std::unique_ptr<Program> Program::MakeFromShaders(const std::vector<GLuint>& shaders,
-                                                  const std::vector<VertexAttribute>& vertex_attributes)
+std::unique_ptr<Program> Program::MakeFromShaders(const std::vector<GLuint>& shaders)
 {
     const auto program_id = glCreateProgram();
     for (const auto shader_id: shaders)
     {
         glAttachShader(program_id, shader_id);
-    }
-
-    for (const auto& [index, name]: vertex_attributes)
-    {
-        glBindAttribLocation(program_id, index, name.c_str());
     }
 
     glLinkProgram(program_id);
@@ -41,15 +35,14 @@ std::unique_ptr<Program> Program::MakeFromShaders(const std::vector<GLuint>& sha
 }
 
 std::unique_ptr<Program> Program::MakeFromFiles(const std::string& vs_filepath,
-                                                const std::string& fs_filepath,
-                                                const std::vector<VertexAttribute>& vertex_attributes)
+                                                const std::string& fs_filepath)
 {
     const auto vs_code = filesystem::BinaryFile::ReadWhole(vs_filepath);
     const auto fs_code = filesystem::BinaryFile::ReadWhole(fs_filepath);
 
     const auto vs_id = ShaderUtils::CompileShader(GL_VERTEX_SHADER, vs_code);
     const auto fs_id = ShaderUtils::CompileShader(GL_FRAGMENT_SHADER, fs_code);
-    auto program = MakeFromShaders({vs_id, fs_id}, vertex_attributes);
+    auto program = MakeFromShaders({vs_id, fs_id});
 
     glDeleteShader(vs_id);
     glDeleteShader(fs_id);

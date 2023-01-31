@@ -12,19 +12,10 @@ namespace vid_lib::opengl::shader
 class Program
 {
 public:
-    struct VertexAttribute
-    {
-        GLuint index;
-        std::string name;
-    };
-
-public:
-    static std::unique_ptr<Program> MakeFromShaders(const std::vector<GLuint>& shaders,
-                                                    const std::vector<VertexAttribute>& vertex_attributes);
+    static std::unique_ptr<Program> MakeFromShaders(const std::vector<GLuint>& shaders);
 
     static std::unique_ptr<Program> MakeFromFiles(const std::string& vs_filepath,
-                                                  const std::string& fs_filepath,
-                                                  const std::vector<VertexAttribute>& vertex_attributes);
+                                                  const std::string& fs_filepath);
 
 public:
     ~Program();
