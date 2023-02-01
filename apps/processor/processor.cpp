@@ -62,39 +62,82 @@ Processor::Processor(const int argc, char* argv[])
 
 void Processor::Run()
 {
-    vid_lib::video::VideoReader input_movie(config_.input_movie_filepath);
-    vid_lib::video::VideoWriter output_movie(config_.output_movie_filepath, config_.output_movie_width,
+    auto input_movie = std::make_unique<vid_lib::video::VideoReader>(config_.input_movie_filepath);
+    auto output_movie = std::make_unique<vid_lib::video::VideoWriter>(config_.output_movie_filepath, config_.output_movie_width,
                                              config_.output_movie_height, config_.output_movie_fps);
 
-    ComputeParameters(input_movie.GetFrameWidth(), input_movie.GetFrameHeight());
-    MakeFramebuffers(input_movie.GetFrameWidth(), input_movie.GetFrameHeight());
+    ComputeParameters(input_movie->GetFrameWidth(), input_movie->GetFrameHeight());
+    MakeFramebuffers(input_movie->GetFrameWidth(), input_movie->GetFrameHeight());
     MakeTextures();
     BuildPrograms();
     MakeTextBufferArray();
     MakeDecalsBufferArray();
 
     cv::Mat input_image;
-    input_movie.GetNextFrame(input_image);
+    input_movie->GetNextFrame(input_image);
     cv::Mat output_image(config_.output_movie_height, config_.output_movie_width, input_image.type());
 
-    std::future<cv::Mat> input_future;
-    std::future<void> output_future;
+    class AsyncVideoWriter
+    {
+    public:
+        explicit AsyncVideoWriter(std::unique_ptr<vid_lib::video::VideoWriter> writer)
+            : writer_(std::move(writer))
+        {
+        }
+
+        void WriteFrame(const cv::Mat& image)
+        {
+            if (future_.valid())
+            {
+                future_.wait();
+            }
+            future_ = std::async(std::launch::async, [this, image]()
+            {
+                writer_->WriteFrame(image);
+            });
+        }
+
+    private:
+        std::unique_ptr<vid_lib::video::VideoWriter> writer_;
+        std::future<void> future_;
+    };
+
+    class AsyncVideoReader
+    {
+    public:
+        explicit AsyncVideoReader(std::unique_ptr<vid_lib::video::VideoReader> reader)
+            : reader_(std::move(reader))
+        {
+        }
+
+        void ReadFrame(cv::Mat& image)
+        {
+            if (future_.valid())
+            {
+                image = future_.get();
+            }
+            future_ = std::async(std::launch::async, [this]()
+            {
+                cv::Mat new_image;
+                reader_->GetNextFrame(new_image);
+                return new_image;
+            });
+        }
+
+    private:
+        std::unique_ptr<vid_lib::video::VideoReader> reader_;
+        std::future<cv::Mat> future_;
+    };
+
+    AsyncVideoReader async_video_read(std::move(input_movie));
+    AsyncVideoWriter async_video_writer(std::move(output_movie));
     const auto start = std::chrono::high_resolution_clock::now();
     while (!glfwWindowShouldClose(glfw_window_) && !input_image.empty())
     {
         glActiveTexture(GL_TEXTURE0 + 0);
         input_image_texture_->Update(input_image);
 
-        if (input_future.valid())
-        {
-            input_image = input_future.get();
-        }
-        input_future = std::async(std::launch::async, [&input_movie]()
-        {
-            cv::Mat new_image;
-            input_movie.GetNextFrame(new_image);
-            return new_image;
-        });
+        async_video_read.ReadFrame(input_image);
 
         UpdateTime();
         RenderFirstPass();
@@ -106,14 +149,7 @@ void Processor::Run()
         glReadPixels(0, 0, config_.output_movie_width, config_.output_movie_height, GL_BGR, GL_UNSIGNED_BYTE,
                      output_image.data);
 
-        if (output_future.valid())
-        {
-            output_future.wait();
-        }
-        output_future = std::async(std::launch::async, [&output_movie, &output_image]()
-        {
-            output_movie.WriteFrame(output_image);
-        });
+        async_video_writer.WriteFrame(output_image);
 
         glfwPollEvents();
     }
