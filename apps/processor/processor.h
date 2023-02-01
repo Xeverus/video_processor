@@ -39,7 +39,7 @@ private:
     std::unique_ptr<vid_lib::opengl::shader::Program> program_2a_;
     std::unique_ptr<vid_lib::opengl::texture::Framebuffer> first_framebuffer_;
     std::unique_ptr<vid_lib::opengl::texture::Framebuffer> second_framebuffer_;
-    std::unique_ptr<vid_lib::opengl::texture::Framebuffer> default_framebuffer_;
+    std::unique_ptr<vid_lib::opengl::texture::Framebuffer> third_framebuffer_;
     std::unique_ptr<vid_lib::opengl::texture::Texture> input_image_texture_;
     std::unique_ptr<vid_lib::opengl::texture::Texture> font_texture_;
     std::unique_ptr<vid_lib::opengl::texture::Texture> decals_texture_;

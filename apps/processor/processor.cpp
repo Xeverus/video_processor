@@ -139,7 +139,7 @@ void Processor::MakeFramebuffers(const int width, const int height)
 {
     first_framebuffer_ = vid_lib::opengl::texture::Framebuffer::MakeNew(width, height);
     second_framebuffer_ = vid_lib::opengl::texture::Framebuffer::MakeNew(width, height);
-    default_framebuffer_ = vid_lib::opengl::texture::Framebuffer::WrapDefault(
+    third_framebuffer_ = vid_lib::opengl::texture::Framebuffer::WrapDefault(
         config_.output_movie_width, config_.output_movie_height);
 }
 
@@ -252,7 +252,7 @@ void Processor::RenderFifthPass()
     program_2a_->Use();
     program_2a_->SetUniform("u_image", 0);
     second_framebuffer_->BindTexture();
-    default_framebuffer_->Bind();
+    third_framebuffer_->Bind();
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glFlush();
 }

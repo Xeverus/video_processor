@@ -1,5 +1,5 @@
-input-image: ../../../Assets/Movies/original.MOV
-output-image: ../../../Assets/Movies/output.mp4
+input-image: ../../../assets/movies/original.MOV
+output-image: ../../../assets/movies/output.mp4
 output-width: 480
 output-height: 640
 output-fps: 30
