@@ -7,6 +7,10 @@ ExternalProject_Add(
         SOURCE_DIR "${CMAKE_SOURCE_DIR}/third_party/opencv/opencv/"
         BINARY_DIR "${CMAKE_BINARY_DIR}/third_party/opencv/bin/"
         CMAKE_ARGS
+            -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -DCMAKE_DEBUG_POSTFIX=''
+            -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR}/install/opencv
             -DBUILD_JAVA=OFF
             -DBUILD_FAT_JAVA_LIB=OFF
             -DBUILD_opencv_python2=OFF
@@ -14,9 +18,6 @@ ExternalProject_Add(
             -DBUILD_LIST=videoio
             -DBUILD_PROTOBUF=OFF
             -DBUILD_opencv_apps=OFF
-            -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-            -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR}/install/opencv
             -DOPENCV_DNN_OPENCL=OFF
             -DWITH_OPENCL=OFF
             -DWITH_PNG=ON
@@ -38,4 +39,3 @@ ExternalProject_Add(
             -DWITH_IMGCODEC_PFM=OFF
         TEST_COMMAND ""
 )
-set_property(TARGET "opencv" PROPERTY CXX_STANDARD ${CMAKE_CXX_STANDARD})

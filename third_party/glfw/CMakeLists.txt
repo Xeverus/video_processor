@@ -14,4 +14,3 @@ ExternalProject_Add(
             -DGLFW_BUILD_DOCS=OFF
         TEST_COMMAND ""
 )
-set_property(TARGET "glfw" PROPERTY CXX_STANDARD ${CMAKE_CXX_STANDARD})

@@ -12,4 +12,3 @@ ExternalProject_Add(
             -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR}/install/glad
         TEST_COMMAND ""
 )
-set_property(TARGET "glad" PROPERTY CXX_STANDARD ${CMAKE_CXX_STANDARD})
