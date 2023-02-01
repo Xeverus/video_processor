@@ -39,3 +39,6 @@ ExternalProject_Add(
             -DWITH_IMGCODEC_PFM=OFF
         TEST_COMMAND ""
 )
+
+set(OPENCV_STATIC_LIBS ${CMAKE_BINARY_DIR}/install/opencv/x64/mingw/lib CACHE STRING "")
+set(OPENCV_SHARED_LIBS ${CMAKE_BINARY_DIR}/install/opencv/x64/mingw/bin CACHE STRING "")

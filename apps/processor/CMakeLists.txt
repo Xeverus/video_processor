@@ -23,14 +23,17 @@ target_link_libraries(${PROJECT_NAME}
 # install config
 add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_CURRENT_SOURCE_DIR}/config.txt
-        ${CMAKE_CURRENT_BINARY_DIR}/config.txt)
+        COMMAND ${CMAKE_COMMAND} -E
+        copy ${CMAKE_CURRENT_SOURCE_DIR}/config.txt ${CMAKE_CURRENT_BINARY_DIR}/config.txt
+)
 
 # install shared libs
-file(GLOB_RECURSE OPENCV_SHARED_OBJECTS "${CMAKE_BINARY_DIR}/install/opencv/x64/mingw/bin/*.dll")
 add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        ${OPENCV_SHARED_OBJECTS}
-        ${CMAKE_CURRENT_BINARY_DIR}/)
+            ${OPENCV_SHARED_LIBS}/libopencv_core470.dll
+            ${OPENCV_SHARED_LIBS}/libopencv_imgcodecs470.dll
+            ${OPENCV_SHARED_LIBS}/libopencv_imgproc470.dll
+            ${OPENCV_SHARED_LIBS}/libopencv_videoio470.dll
+            ${OPENCV_SHARED_LIBS}/opencv_videoio_ffmpeg470_64.dll
+            ${CMAKE_CURRENT_BINARY_DIR}/)

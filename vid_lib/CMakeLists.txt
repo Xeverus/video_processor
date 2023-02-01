@@ -27,7 +27,7 @@ target_include_directories(${PROJECT_NAME}
 target_link_directories(${PROJECT_NAME}
         PUBLIC ${CMAKE_BINARY_DIR}/install/glad/lib
         PUBLIC ${CMAKE_BINARY_DIR}/install/glfw/lib
-        PUBLIC ${CMAKE_BINARY_DIR}/install/opencv/x64/mingw/lib
+        PUBLIC ${OPENCV_STATIC_LIBS}
         )
 
 target_link_libraries(${PROJECT_NAME}

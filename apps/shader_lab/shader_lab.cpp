@@ -104,7 +104,8 @@ void ShaderLab::Run()
 
     film_margin_edges_ = vid_lib::math::Film::CalculateMarginEdges(new_window_height, 24, 8);
 
-    const auto image = video.ReadFrame();
+    cv::Mat image;
+    video.ReadFrame(image);
     cv::flip(image, image, 0);
 
     vid_lib::math::Random random;
