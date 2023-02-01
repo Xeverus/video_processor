@@ -42,26 +42,13 @@ void ShaderLab::KeyCallback(GLFWwindow* window, int key, int scancode, int actio
             app->contrast_ += app->up ? step : -step;
             break;
         case GLFW_KEY_1:
-            if (app->up)
-            {
-                app->tint_[0] += 0.01;
-                app->tint_[2] += 0.01;
-            }
-            else
-            {
-                app->tint_[0] -= 0.01;
-                app->tint_[2] -= 0.01;
-            }
+            app->tint_[0] += app->up ? 0.01 : -0.01;
             break;
         case GLFW_KEY_2:
-            if (app->up)
-            {
-                app->tint_[1] += 0.01;
-            }
-            else
-            {
-                app->tint_[1] -= 0.01;
-            }
+            app->tint_[1] += app->up ? 0.01 : -0.01;
+            break;
+        case GLFW_KEY_3:
+            app->tint_[2] += app->up ? 0.01 : -0.01;
             break;
         case GLFW_KEY_R:
             app->brightness_ = 0.0f;
