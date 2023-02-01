@@ -1,6 +1,4 @@
-#include "video_writer.h"
-
-#include <iostream>
+#include <vid_lib/video/video_writer.h>
 
 namespace vid_lib::video
 {

@@ -3,8 +3,8 @@
 #include <ostream>
 #include <string>
 
-#include "opencv2/core.hpp"
-#include "opencv2/videoio.hpp"
+#include <opencv2/core.hpp>
+#include <opencv2/videoio.hpp>
 
 namespace vid_lib::video
 {

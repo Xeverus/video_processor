@@ -1,4 +1,4 @@
-#include "video_reader.h"
+#include <vid_lib/video/video_reader.h>
 
 #include <iostream>
 
@@ -16,7 +16,7 @@ VideoReader::VideoReader(const std::string& filepath)
     WriteDetailsTo(std::cout);
 }
 
-void VideoReader::GetNextFrame(cv::Mat& image)
+void VideoReader::ReadFrame(cv::Mat& image)
 {
     video_capture_.read(image);
 }

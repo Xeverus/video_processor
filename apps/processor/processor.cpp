@@ -11,6 +11,8 @@
 
 #include "vid_lib/sprite/geometry_generator.h"
 
+#include <vid_lib/video/async_video_reader.h>
+#include <vid_lib/video/async_video_writer.h>
 #include <vid_lib/video/video_reader.h>
 #include <vid_lib/video/video_writer.h>
 
@@ -74,66 +76,16 @@ void Processor::Run()
     MakeDecalsBufferArray();
 
     cv::Mat input_image;
-    input_movie->GetNextFrame(input_image);
+    input_movie->ReadFrame(input_image);
     cv::Mat output_image(config_.output_movie_height, config_.output_movie_width, input_image.type());
 
-    class AsyncVideoWriter
-    {
-    public:
-        explicit AsyncVideoWriter(std::unique_ptr<vid_lib::video::VideoWriter> writer)
-            : writer_(std::move(writer))
-        {
-        }
-
-        void WriteFrame(const cv::Mat& image)
-        {
-            if (future_.valid())
-            {
-                future_.wait();
-            }
-            future_ = std::async(std::launch::async, [this, image]()
-            {
-                writer_->WriteFrame(image);
-            });
-        }
-
-    private:
-        std::unique_ptr<vid_lib::video::VideoWriter> writer_;
-        std::future<void> future_;
-    };
-
-    class AsyncVideoReader
-    {
-    public:
-        explicit AsyncVideoReader(std::unique_ptr<vid_lib::video::VideoReader> reader)
-            : reader_(std::move(reader))
-        {
-        }
-
-        void ReadFrame(cv::Mat& image)
-        {
-            if (future_.valid())
-            {
-                image = future_.get();
-            }
-            future_ = std::async(std::launch::async, [this]()
-            {
-                cv::Mat new_image;
-                reader_->GetNextFrame(new_image);
-                return new_image;
-            });
-        }
-
-    private:
-        std::unique_ptr<vid_lib::video::VideoReader> reader_;
-        std::future<cv::Mat> future_;
-    };
-
-    AsyncVideoReader async_video_read(std::move(input_movie));
-    AsyncVideoWriter async_video_writer(std::move(output_movie));
+    vid_lib::video::AsyncVideoReader async_video_read(std::move(input_movie));
+    vid_lib::video::AsyncVideoWriter async_video_writer(std::move(output_movie));
     const auto start = std::chrono::high_resolution_clock::now();
     while (!glfwWindowShouldClose(glfw_window_) && !input_image.empty())
     {
+        async_video_read.Wait();
+
         glActiveTexture(GL_TEXTURE0 + 0);
         input_image_texture_->Update(input_image);
 
