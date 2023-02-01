@@ -1,5 +1,6 @@
 #include <processor.h>
 
+#include <iostream>
 #include <fstream>
 
 #include <vid_lib/math/aspect_ratio.h>
@@ -69,6 +70,8 @@ void Processor::Run()
 
     auto input_image = input_movie.GetNextFrame();
     cv::Mat output_image(config_.output_movie_height, config_.output_movie_width, input_image.type());
+
+    const auto start = std::chrono::high_resolution_clock::now();
     while (!glfwWindowShouldClose(glfw_window_) && !input_image.empty())
     {
         UpdateTime();
@@ -90,6 +93,8 @@ void Processor::Run()
 
         input_image = input_movie.GetNextFrame();
     }
+    const auto end = std::chrono::high_resolution_clock::now();
+    std::cout << (end - start).count() << std::endl;
 }
 
 void Processor::ComputeParameters(const int input_movie_width, const int input_movie_height)
