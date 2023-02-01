@@ -7,71 +7,22 @@ in vec2 v_textureCoords;
 
 layout(location = 0) out vec3 out_color;
 
-vec4 textureWithBlur3x3(sampler2D image, vec2 textureCoords, vec2 imageTexelSize)
-{
-    const float kernel[9] = float[](
-        1, 2, 1,
-        2, 4, 2,
-        1, 2, 1
-    );
-    const float multiplier = 1.0 / 16.0;
-
-    vec4 color = vec4(0.0, 0.0, 0.0, 0.0);
-    for (int i = -1; i < 2; ++i)
-    {
-        for (int j = -1; j < 2; ++j)
-        {
-            float weight = kernel[(i + 1) + (j + 1) * 3] * multiplier;
-            vec2 texCoords = textureCoords + imageTexelSize * vec2(i, j);
-
-            color += texture(image, texCoords) * weight;
-        }
-    }
-
-    return color;
-}
-
 vec4 textureWithBlur5x5(sampler2D image, vec2 textureCoords, vec2 imageTexelSize)
 {
     const float kernel[25] = float[](
-        1, 4, 7, 4, 1,
-        4, 16, 26, 16, 4,
-        7, 26, 41, 26, 7,
-        4, 16, 26, 16, 4,
-        1, 4, 7, 4, 1
+        0.04, 0.04, 0.04, 0.04, 0.04,
+        0.04, 0.04, 0.04, 0.04, 0.04,
+        0.04, 0.04, 0.04, 0.04, 0.04,
+        0.04, 0.04, 0.04, 0.04, 0.04,
+        0.04, 0.04, 0.04, 0.04, 0.04
     );
-    const float multiplier = 1.0 / 273.0;
 
     vec4 color = vec4(0.0, 0.0, 0.0, 0.0);
     for (int i = -2; i < 3; ++i)
     {
         for (int j = -2; j < 3; ++j)
         {
-            float weight = kernel[(i + 2) + (j + 2) * 5] * multiplier;
-            vec2 texCoords = textureCoords + imageTexelSize * vec2(i, j);
-
-            color += texture(image, texCoords) * weight;
-        }
-    }
-
-    return color;
-}
-
-vec4 textureWithSharpening3x3(sampler2D image, vec2 textureCoords, vec2 imageTexelSize)
-{
-    const float kernel[9] = float[](
-        0, -1, 0,
-        -1, 5, -1,
-        0, -1, 0
-    );
-    const float multiplier = 1.0;
-
-    vec4 color = vec4(0.0, 0.0, 0.0, 0.0);
-    for (int i = -1; i < 2; ++i)
-    {
-        for (int j = -1; j < 2; ++j)
-        {
-            float weight = kernel[(i + 1) + (j + 1) * 3] * multiplier;
+            float weight = kernel[(i + 2) + (j + 2) * 5];
             vec2 texCoords = textureCoords + imageTexelSize * vec2(i, j);
 
             color += texture(image, texCoords) * weight;
@@ -127,7 +78,6 @@ float noise(vec2 p, float t)
     return mix(mix(hash(b.xy, t), hash(b.zy, t), f.x), mix(hash(b.xw, t), hash(b.zw, t), f.x), f.y);
 }
 
-#define num_octaves 4
 float fbm(vec2 pos)
 {
     const float pi = 3.141592653589793;
@@ -136,7 +86,7 @@ float fbm(vec2 pos)
     float scale = 2.0;
     float atten = 0.5;
     float t = 0.0;
-    for(int i = 0; i < num_octaves; ++i)
+    for(int i = 0; i < 4; ++i)
     {
         t += atten;
         value += noise(pos * scale, float(i)) * atten;
