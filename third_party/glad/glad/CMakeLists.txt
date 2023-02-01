@@ -4,12 +4,18 @@ project(glad)
 
 include(GNUInstallDirs)
 
-add_library(glad include/glad/gl.h src/gl.c)
+set(GLAD_HEADERS
+        include/glad/gl.h
+        include/KHR/khrplatform.h
+        )
 
-set_target_properties(glad PROPERTIES
-        OUTPUT_NAME glad_lib
-        PUBLIC_HEADER include/glad/gl.h)
+add_library(glad
+        ${GLAD_HEADERS}
+        src/gl.c)
+
+set_target_properties(glad PROPERTIES OUTPUT_NAME glad_lib)
 
 target_include_directories(glad PUBLIC include)
 
-install(TARGETS glad PUBLIC_HEADER DESTINATION include/glad)
+install(TARGETS glad)
+install(DIRECTORY include DESTINATION .)
