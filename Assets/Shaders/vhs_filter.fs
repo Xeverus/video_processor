@@ -101,11 +101,14 @@ void main()
 
     color = applyFilmMargins(color, uFilmMarginColor, uFilmMarginEdges, gl_FragCoord.y + noise);
 
-    color += uTint - 1.0;
     color = adjustSaturation(color, uSaturation);
     color = adjustExposure(color, uExposure);
     color = adjustContrast(color, uContrast);
     color = adjustBrightness(color, uBrightness);
+    color += uTint;
+
+    float m = min(color.x, min(color.y, color.z));
+    color += mix(0.0, 0.2, 1.0 - m);
 
     outColor = color;
 }

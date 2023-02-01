@@ -55,9 +55,9 @@ void ShaderLab::KeyCallback(GLFWwindow* window, int key, int scancode, int actio
             app->saturation_ = 0.0f;
             app->exposure_ = 0.0f;
             app->contrast_ = 0.0f;
-            app->tint_[0] = 1.0f;
-            app->tint_[1] = 1.0f;
-            app->tint_[2] = 1.0f;
+            app->tint_[0] = 0.0f;
+            app->tint_[1] = 0.0f;
+            app->tint_[2] = 0.0f;
             break;
     }
 
