@@ -23,15 +23,10 @@ void AsyncVideoReader::Wait()
 
 void AsyncVideoReader::ReadFrame(cv::Mat& image)
 {
-    if (future_.valid())
+    Wait();
+    future_ = std::async(std::launch::async, [this, &image]()
     {
-        image = future_.get();
-    }
-    future_ = std::async(std::launch::async, [this]()
-    {
-        cv::Mat new_image;
-        reader_->ReadFrame(new_image);
-        return new_image;
+        reader_->ReadFrame(image);
     });
 }
 

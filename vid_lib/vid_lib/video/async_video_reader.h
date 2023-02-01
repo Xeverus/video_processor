@@ -19,7 +19,7 @@ public:
 
 private:
     std::unique_ptr<vid_lib::video::VideoReader> reader_;
-    std::future<cv::Mat> future_;
+    std::future<void> future_;
 };
 
 }
