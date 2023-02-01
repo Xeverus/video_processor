@@ -19,7 +19,7 @@ public:
     int GetFrameCount() const;
     double GetFramesPerSecond() const;
 
-    const cv::Mat& GetNextFrame();
+    void GetNextFrame(cv::Mat& image);
 
     void WriteDetailsTo(std::ostream& stream) const;
 

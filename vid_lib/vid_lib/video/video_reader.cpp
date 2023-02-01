@@ -16,10 +16,9 @@ VideoReader::VideoReader(const std::string& filepath)
     WriteDetailsTo(std::cout);
 }
 
-const cv::Mat& VideoReader::GetNextFrame()
+void VideoReader::GetNextFrame(cv::Mat& image)
 {
-    video_capture_.read(image_);
-    return image_;
+    video_capture_.read(image);
 }
 
 void VideoReader::WriteDetailsTo(std::ostream& stream) const

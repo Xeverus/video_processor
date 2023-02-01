@@ -73,7 +73,8 @@ void Processor::Run()
     MakeTextBufferArray();
     MakeDecalsBufferArray();
 
-    auto input_image = input_movie.GetNextFrame();
+    cv::Mat input_image;
+    input_movie.GetNextFrame(input_image);
     cv::Mat output_image(config_.output_movie_height, config_.output_movie_width, input_image.type());
 
     std::future<void> output_future;
@@ -82,7 +83,7 @@ void Processor::Run()
     {
         glActiveTexture(GL_TEXTURE0 + 0);
         input_image_texture_->Update(input_image);
-        input_image = input_movie.GetNextFrame();
+        input_movie.GetNextFrame(input_image);
 
         UpdateTime();
         RenderFirstPass();
