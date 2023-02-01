@@ -108,7 +108,7 @@ void main()
     color += uTint;
 
     float m = min(color.x, min(color.y, color.z));
-    color += mix(0.0, 0.2, 1.0 - m);
+    color += mix(1.0, 0.0, min(m * 4.0, 1.0));
 
     outColor = color;
 }

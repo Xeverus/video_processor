@@ -32,30 +32,6 @@ vec4 textureWithBlur5x5(sampler2D image, vec2 textureCoords, vec2 imageTexelSize
     return color;
 }
 
-vec3 adjustBrightness(vec3 color, float brightness)
-{
-    return brightness + color;
-}
-
-vec3 adjustContrast(vec3 color, float contrast)
-{
-    return (1.0 + contrast) * (color - 0.5) + 0.5;
-}
-
-vec3 adjustExposure(vec3 color, float exposure)
-{
-    return (1.0 + exposure) * color;
-}
-
-vec3 adjustSaturation(vec3 color, float saturation)
-{
-    // https://www.w3.org/TR/WCAG21/#dfn-relative-luminance
-    const vec3 luminosityFactor = vec3(0.2126, 0.7152, 0.0722);
-    vec3 grayscale = vec3(dot(color, luminosityFactor));
-
-    return mix(grayscale, color, 1.0 + saturation);
-}
-
 vec2 rotate(vec2 position, float angle)
 {
     float s = sin(angle);
@@ -110,6 +86,42 @@ vec2 addVerticalDistortion(vec2 textureCoords, float speed, float amplitude)
     return textureCoords;
 }
 
+vec3 adjustBrightness(vec3 color, float brightness)
+{
+    return brightness + color;
+}
+
+vec3 adjustContrast(vec3 color, float contrast)
+{
+    return (1.0 + contrast) * (color - 0.5) + 0.5;
+}
+
+vec3 adjustExposure(vec3 color, float exposure)
+{
+    return (1.0 + exposure) * color;
+}
+
+vec3 adjustSaturation(vec3 color, float saturation)
+{
+    // https://www.w3.org/TR/WCAG21/#dfn-relative-luminance
+    const vec3 luminosityFactor = vec3(0.2126, 0.7152, 0.0722);
+    vec3 grayscale = vec3(dot(color, luminosityFactor));
+
+    return mix(grayscale, color, 1.0 + saturation);
+}
+
+vec3 adjustTint(vec3 color)
+{
+    return color + vec3(0.06, 0.025, 0.06);
+}
+
+vec3 adjustShadows(vec3 color)
+{
+    float m = max(color.x, min(color.y, color.z));
+    color += mix(0.3, 0.0, min(1.0, m * 2.0));
+    return color;
+}
+
 void main()
 {
     vec2 imageTexelSize = 1.0 / textureSize(u_image, 0);
@@ -120,13 +132,11 @@ void main()
     color = addLightArtifacts(color, textureCoords, u_time, 0.025);
 
     color = adjustSaturation(color, -0.1);
-    color = adjustExposure(color, 0.05);
-    color = adjustContrast(color, 0.05);
-    color = adjustBrightness(color, -0.45);
-    color += vec3(0.11, 0.05, 0.08);
-
-    float m = min(color.x, min(color.y, color.z));
-    color += mix(0.0, 0.2, 1.0 - m);
+    color = adjustExposure(color, 0.0);
+    color = adjustContrast(color, 0.5);
+    color = adjustBrightness(color, -0.4);
+    color = adjustTint(color);
+    color = adjustShadows(color);
 
     out_color = color;
 }
