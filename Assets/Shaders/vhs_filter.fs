@@ -101,7 +101,7 @@ void main()
 
     color = applyFilmMargins(color, uFilmMarginColor, uFilmMarginEdges, gl_FragCoord.y + noise);
 
-    color *= uTint;
+    color += uTint - 1.0;
     color = adjustSaturation(color, uSaturation);
     color = adjustExposure(color, uExposure);
     color = adjustContrast(color, uContrast);

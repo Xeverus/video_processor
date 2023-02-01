@@ -169,11 +169,11 @@ void main()
     vec3 color = textureWithBlur5x5(u_image, textureCoords, imageTexelSize).xyz;
     color = addLightArtifacts(color, textureCoords, u_time, 0.025);
 
-    color *= vec3(1.24, 1.0, 1.24);
-    color = adjustSaturation(color, -0.1);
-    color = adjustExposure(color, 0.4);
-    color = adjustContrast(color, -0.3);
-    color = adjustBrightness(color, -0.3);
+    color = adjustSaturation(color, -0.25);
+    color = adjustExposure(color, 0.05);
+    color = adjustContrast(color, 0.3);
+    color = adjustBrightness(color, -0.25);
+    color += vec3(0.12, 0.05, 0.04);
 
     out_color = color;
 }
