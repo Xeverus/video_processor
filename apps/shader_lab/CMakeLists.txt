@@ -19,3 +19,11 @@ add_dependencies(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
         PRIVATE vid_lib)
+
+# install shared libs
+file(GLOB_RECURSE OPENCV_SHARED_OBJECTS "${CMAKE_BINARY_DIR}/install/opencv/x64/mingw/bin/*.dll")
+add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${OPENCV_SHARED_OBJECTS}
+        ${CMAKE_CURRENT_BINARY_DIR}/)

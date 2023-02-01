@@ -7,7 +7,7 @@
 #include <vid_lib/math/random.h>
 
 #include <vid_lib/opengl/debug/debug_messenger.h>
-#include <vid_lib/opengl/shader/shader.h>
+#include <vid_lib/opengl/shader/program.h>
 
 #include <vid_lib/video/video_reader.h>
 
@@ -91,9 +91,9 @@ void ShaderLab::Run()
     glfwSetKeyCallback(window, KeyCallback);
     vid_lib::opengl::debug::DebugMessenger::Enable();
 
-    const auto program = vid_lib::opengl::shader::ShaderUtils::MakeProgramFromFiles(
-        "../../../Assets/Shaders/vhs_filter.vs", "../../../Assets/Shaders/vhs_filter.fs", {});
-    glUseProgram(program);
+    const auto program = vid_lib::opengl::shader::Program::MakeFromFiles(
+        "../../../Assets/Shaders/vhs_filter.vs", "../../../Assets/Shaders/vhs_filter.fs");
+    program->Use();
 
     GLuint vao;
     glGenVertexArrays(1, &vao);
@@ -132,17 +132,16 @@ void ShaderLab::Run()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        glUniform1f(glGetUniformLocation(program, "uVerticalScale"), vertical_scale);
-
-        glUniform1i(glGetUniformLocation(program, "uImage"), 0);
-        glUniform1f(glGetUniformLocation(program, "uBrightness"), brightness_);
-        glUniform1f(glGetUniformLocation(program, "uContrast"), contrast_);
-        glUniform1f(glGetUniformLocation(program, "uExposure"), exposure_);
-        glUniform1f(glGetUniformLocation(program, "uSaturation"), saturation_);
-        glUniform3fv(glGetUniformLocation(program, "uTint"), 1, tint_.data());
-        glUniform3fv(glGetUniformLocation(program, "uFilmMarginColor"), 1, film_margin_color_.data());
-        glUniform4fv(glGetUniformLocation(program, "uFilmMarginEdges"), 1, film_margin_edges_.data());
-        glUniform1f(glGetUniformLocation(program, "uRandomSeed"), random.GetNextFloat());
+        program->SetUniform("uVerticalScale", vertical_scale);
+        program->SetUniform("uImage", 0);
+        program->SetUniform("uBrightness", brightness_);
+        program->SetUniform("uContrast", contrast_);
+        program->SetUniform("uExposure", exposure_);
+        program->SetUniform("uSaturation", saturation_);
+        program->SetUniform("uTint", tint_[0], tint_[1], tint_[2]);
+        program->SetUniform("uFilmMarginColor", film_margin_color_[0], film_margin_color_[1], film_margin_color_[2]);
+        program->SetUniform("uFilmMarginEdges", film_margin_edges_[0], film_margin_edges_[1], film_margin_edges_[2], film_margin_edges_[3]);
+        program->SetUniform("uRandomSeed", random.GetNextFloat());
 
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         glFlush();
