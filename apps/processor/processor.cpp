@@ -1,5 +1,6 @@
 #include <processor.h>
 
+#include <future>
 #include <iostream>
 #include <fstream>
 
@@ -71,14 +72,15 @@ void Processor::Run()
     auto input_image = input_movie.GetNextFrame();
     cv::Mat output_image(config_.output_movie_height, config_.output_movie_width, input_image.type());
 
+    std::future<void> output_future;
     const auto start = std::chrono::high_resolution_clock::now();
     while (!glfwWindowShouldClose(glfw_window_) && !input_image.empty())
     {
-        UpdateTime();
-
         glActiveTexture(GL_TEXTURE0 + 0);
         input_image_texture_->Update(input_image);
+        input_image = input_movie.GetNextFrame();
 
+        UpdateTime();
         RenderFirstPass();
         RenderSecondPass();
         RenderThirdPass();
@@ -87,11 +89,16 @@ void Processor::Run()
 
         glReadPixels(0, 0, config_.output_movie_width, config_.output_movie_height, GL_BGR, GL_UNSIGNED_BYTE,
                      output_image.data);
-        output_movie.WriteFrame(output_image);
+
+        if (output_future.valid())
+        {
+            output_future.wait();
+        }
+        output_future = std::async(std::launch::async, [&output_movie, &output_image](){
+            output_movie.WriteFrame(output_image);
+        });
 
         glfwPollEvents();
-
-        input_image = input_movie.GetNextFrame();
     }
     const auto end = std::chrono::high_resolution_clock::now();
     std::cout << (end - start).count() << std::endl;
