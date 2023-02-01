@@ -55,10 +55,6 @@ private:
     std::array<float, 3> film_margin_color_ = {0.15f, 0.08f, 0.0f};
     std::array<float, 4> film_margin_edges_ = {0.0f};
     float vertical_scale_;
-    float text_sprite_screen_width_;
-    float text_sprite_screen_height_;
-    float decal_sprite_screen_width_;
-    float decal_sprite_screen_height_;
 
 private:
     void ComputeParameters(int input_movie_width, int input_movie_height);

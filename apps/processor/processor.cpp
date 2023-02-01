@@ -143,22 +143,22 @@ void Processor::BuildPrograms()
 
 void Processor::MakeTextBufferArray()
 {
-    text_sprite_screen_height_ = 0.14f;
-    text_sprite_screen_width_ = text_sprite_screen_height_ * 0.6f;
+    const auto text_sprite_screen_height = 0.14f;
+    const auto text_sprite_screen_width = text_sprite_screen_height * 0.6f;
 
     text_ = vid_lib::sprite::GeometryGenerator::MakeVerticalText(
-        "JAN.29 2023\nPM 6:41", -0.85f, -0.8f, text_sprite_screen_width_, text_sprite_screen_height_, *font_atlas_);
+        "JAN.29 2023\nPM 6:41", -0.85f, -0.8f, text_sprite_screen_width, text_sprite_screen_height, *font_atlas_);
 
     text_buffer_array_ = std::make_unique<vid_lib::opengl::buffer::SpriteBufferArray>(text_->GetSprites());
 }
 
 void Processor::MakeDecalsBufferArray()
 {
-    decal_sprite_screen_width_ = 0.16f;
-    decal_sprite_screen_height_ = decal_sprite_screen_width_ * 2.5f;
+    const auto decal_sprite_screen_width = 0.16f;
+    const auto decal_sprite_screen_height = decal_sprite_screen_width * 2.5f;
 
     decals_ = vid_lib::sprite::GeometryGenerator::MakeRandomlyPlacedSprites(
-        *decals_atlas_, 16, decal_sprite_screen_width_, decal_sprite_screen_height_, random_source_);
+        *decals_atlas_, 16, decal_sprite_screen_width, decal_sprite_screen_height, random_source_);
 
     decals_buffer_array_ = std::make_unique<vid_lib::opengl::buffer::SpriteBufferArray>(decals_->GetSprites());
 }
@@ -187,7 +187,7 @@ void Processor::RenderSecondPass()
     {
         program_1b_->SetUniform("u_image", 0);
         program_1b_->SetUniform("u_fontImage", 1);
-        program_1b_->SetUniform("u_spriteScreenSize", text_sprite_screen_width_, text_sprite_screen_height_);
+        program_1b_->SetUniform("u_spriteScreenSize", text_->GetSpriteScreenWidth(), text_->GetSpriteScreenHeight());
         program_1b_->SetUniform("u_spriteTextureSize",
                                 font_atlas_->GetSpriteTextureWidth(), font_atlas_->GetSpriteTextureHeight());
         program_1b_->SetUniform("u_spriteRotation", 3.14f / 2.0f);
@@ -201,7 +201,8 @@ void Processor::RenderThirdPass()
     if (random_source_.GetNextFloat() < 0.03f)
     {
         program_1b_->SetUniform("u_fontImage", 2);
-        program_1b_->SetUniform("u_spriteScreenSize", decal_sprite_screen_width_, decal_sprite_screen_height_);
+        program_1b_->SetUniform("u_spriteScreenSize",
+                                decals_->GetSpriteScreenWidth(), decals_->GetSpriteScreenHeight());
         program_1b_->SetUniform("u_spriteTextureSize",
                                 decals_atlas_->GetSpriteTextureWidth(), decals_atlas_->GetSpriteTextureHeight());
         program_1b_->SetUniform("u_spriteRotation", 0.0f);

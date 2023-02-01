@@ -34,7 +34,7 @@ std::unique_ptr<SpriteBatch> GeometryGenerator::MakeVerticalText(const std::stri
         ++sprite_index;
     }
 
-    return std::make_unique<SpriteBatch>(std::move(letters), sprite_width, sprite_height);
+    return std::make_unique<SpriteBatch>(std::move(letters), sprite_height, sprite_width);
 }
 
 Sprite GeometryGenerator::MakeSprite(const Atlas::SpriteDescription& sprite_description,
