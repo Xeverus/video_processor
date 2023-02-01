@@ -77,13 +77,24 @@ void Processor::Run()
     input_movie.GetNextFrame(input_image);
     cv::Mat output_image(config_.output_movie_height, config_.output_movie_width, input_image.type());
 
+    std::future<cv::Mat> input_future;
     std::future<void> output_future;
     const auto start = std::chrono::high_resolution_clock::now();
     while (!glfwWindowShouldClose(glfw_window_) && !input_image.empty())
     {
         glActiveTexture(GL_TEXTURE0 + 0);
         input_image_texture_->Update(input_image);
-        input_movie.GetNextFrame(input_image);
+
+        if (input_future.valid())
+        {
+            input_image = input_future.get();
+        }
+        input_future = std::async(std::launch::async, [&input_movie]()
+        {
+            cv::Mat new_image;
+            input_movie.GetNextFrame(new_image);
+            return new_image;
+        });
 
         UpdateTime();
         RenderFirstPass();
