@@ -37,6 +37,7 @@ Config LoadConfig(const int argc, char* argv[])
     file >> parameter_name >> config.film_margin_step;
     file >> parameter_name >> config.film_margin_color[0] >> config.film_margin_color[1] >> config.film_margin_color[2];
     file >> parameter_name >> config.shaders_dir;
+    file >> parameter_name >> config.enable_debug;
 
     return config;
 }
@@ -50,10 +51,13 @@ Processor::Processor(const int argc, char* argv[])
 {
     config_ = LoadConfig(argc, argv);
     open_gl_ = std::make_unique<vid_lib::opengl::OpenGl>();
-    glfw_window_ = open_gl_->MakeWindow({256, 128, "Video Processor"});
+    glfw_window_ = open_gl_->MakeWindow({config_.output_movie_width, config_.output_movie_height, "Video Processor"});
     glfwSetWindowUserPointer(glfw_window_, this);
 
-    vid_lib::opengl::debug::DebugMessenger::Enable();
+    if (config_.enable_debug)
+    {
+        vid_lib::opengl::debug::DebugMessenger::Enable();
+    }
 }
 
 void Processor::Run()
@@ -94,7 +98,8 @@ void Processor::Run()
         {
             output_future.wait();
         }
-        output_future = std::async(std::launch::async, [&output_movie, &output_image](){
+        output_future = std::async(std::launch::async, [&output_movie, &output_image]()
+        {
             output_movie.WriteFrame(output_image);
         });
 
@@ -134,8 +139,6 @@ void Processor::MakeFramebuffers(const int width, const int height)
 {
     first_framebuffer_ = vid_lib::opengl::texture::Framebuffer::MakeNew(width, height);
     second_framebuffer_ = vid_lib::opengl::texture::Framebuffer::MakeNew(width, height);
-
-    glfwSetWindowSize(glfw_window_, config_.output_movie_width, config_.output_movie_height);
     default_framebuffer_ = vid_lib::opengl::texture::Framebuffer::WrapDefault(
         config_.output_movie_width, config_.output_movie_height);
 }

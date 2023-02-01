@@ -14,4 +14,5 @@ struct Config
     int film_margin_step;
     std::array<float, 3> film_margin_color;
     std::string shaders_dir;
+    bool enable_debug;
 };
