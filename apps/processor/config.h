@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <string>
 
 struct Config
@@ -11,4 +12,6 @@ struct Config
     int output_movie_fps;
     int film_margin_size;
     int film_margin_step;
+    std::array<float, 3> film_margin_color;
+    std::string shaders_dir;
 };

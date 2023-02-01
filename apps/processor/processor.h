@@ -51,10 +51,8 @@ private:
 
     float time_step_;
     float time_;
-
-    std::array<float, 3> film_margin_color_ = {0.15f, 0.08f, 0.0f};
-    std::array<float, 4> film_margin_edges_ = {0.0f};
     float vertical_scale_;
+    std::array<float, 4> film_margin_edges_ = {0.0f};
 
 private:
     void ComputeParameters(int input_movie_width, int input_movie_height);

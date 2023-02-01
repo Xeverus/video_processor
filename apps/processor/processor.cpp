@@ -33,6 +33,8 @@ Config LoadConfig(const int argc, char* argv[])
     file >> parameter_name >> config.output_movie_fps;
     file >> parameter_name >> config.film_margin_size;
     file >> parameter_name >> config.film_margin_step;
+    file >> parameter_name >> config.film_margin_color[0] >> config.film_margin_color[1] >> config.film_margin_color[2];
+    file >> parameter_name >> config.shaders_dir;
 
     return config;
 }
@@ -42,10 +44,11 @@ Config LoadConfig(const int argc, char* argv[])
 Processor::Processor(const int argc, char* argv[])
     : time_step_(0.73432117f)
     , time_(0.0f)
+    , vertical_scale_(0.0f)
 {
     config_ = LoadConfig(argc, argv);
     open_gl_ = std::make_unique<vid_lib::opengl::OpenGl>();
-    glfw_window_ = open_gl_->MakeWindow({1024, 768, "Video Processor"});
+    glfw_window_ = open_gl_->MakeWindow({256, 128, "Video Processor"});
     glfwSetWindowUserPointer(glfw_window_, this);
 
     vid_lib::opengl::debug::DebugMessenger::Enable();
@@ -128,17 +131,17 @@ void Processor::MakeFramebuffers(const int width, const int height)
 void Processor::BuildPrograms()
 {
     program_1a_ = vid_lib::opengl::shader::Program::MakeFromFiles(
-        "../../../assets/shaders/processor/full_screen_vertical_scale.vs",
-        "../../../assets/shaders/processor/full_screen_film_margins.fs");
+        config_.shaders_dir + "/full_screen_vertical_scale.vs",
+        config_.shaders_dir + "/full_screen_film_margins.fs");
     program_1b_ = vid_lib::opengl::shader::Program::MakeFromFiles(
-        "../../../assets/shaders/processor/sprites.vs",
-        "../../../assets/shaders/processor/sprites.fs");
+        config_.shaders_dir + "/sprites.vs",
+        config_.shaders_dir + "/sprites.fs");
     program_1c_ = vid_lib::opengl::shader::Program::MakeFromFiles(
-        "../../../assets/shaders/processor/full_screen.vs",
-        "../../../assets/shaders/processor/full_screen_postprocess.fs");
+        config_.shaders_dir + "/full_screen.vs",
+        config_.shaders_dir + "/full_screen_postprocess.fs");
     program_2a_ = vid_lib::opengl::shader::Program::MakeFromFiles(
-        "../../../assets/shaders/processor/full_screen.vs",
-        "../../../assets/shaders/processor/full_screen_channels_separation.fs");
+        config_.shaders_dir + "/full_screen.vs",
+        config_.shaders_dir + "/full_screen_channels_separation.fs");
 }
 
 void Processor::MakeTextBufferArray()
@@ -168,9 +171,12 @@ void Processor::RenderFirstPass()
     program_1a_->Use();
     program_1a_->SetUniform("u_verticalScale", vertical_scale_);
     program_1a_->SetUniform("u_image", 0);
-    program_1a_->SetUniform("u_filmMarginColor", film_margin_color_[0], film_margin_color_[1],
-                            film_margin_color_[2]);
-    program_1a_->SetUniform("u_filmMarginEdges", film_margin_edges_[0], film_margin_edges_[1],
+    program_1a_->SetUniform("u_filmMarginColor",
+                            config_.film_margin_color[0],
+                            config_.film_margin_color[1],
+                            config_.film_margin_color[2]);
+    program_1a_->SetUniform("u_filmMarginEdges",
+                            film_margin_edges_[0], film_margin_edges_[1],
                             film_margin_edges_[2], film_margin_edges_[3]);
 
     first_framebuffer_->Bind();

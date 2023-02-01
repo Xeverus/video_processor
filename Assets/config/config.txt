@@ -5,3 +5,5 @@ output-height: 640
 output-fps: 30
 film-margin-size: 32
 film-margin-step: 4
+film-margin-color: 0.15 0.08 0.0
+shaders-dir: ../../../assets/shaders/processor
