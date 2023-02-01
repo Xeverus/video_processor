@@ -1,10 +1,12 @@
-input-image: ../../../assets/movies/original.MOV
-output-image: ../../../assets/movies/output.mp4
+input-movie: ../../../resources/movies/original.MOV
+output-movie: ../../../resources/movies/output.mp4
+shaders-dir: ../../../resources/shaders/processor
+resources-dir: ../../../resources/sprites
 output-width: 480
 output-height: 640
 output-fps: 30
 film-margin-size: 32
 film-margin-step: 4
 film-margin-color: 0.02 0.04 0.0
-shaders-dir: ../../../assets/shaders/processor
+artifacts-chance: 0.03
 enable-debug: 0

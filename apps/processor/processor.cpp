@@ -13,8 +13,6 @@
 
 #include <vid_lib/video/async_video_reader.h>
 #include <vid_lib/video/async_video_writer.h>
-#include <vid_lib/video/video_reader.h>
-#include <vid_lib/video/video_writer.h>
 
 namespace
 {
@@ -32,13 +30,15 @@ Config LoadConfig(const int argc, char* argv[])
 
     file >> parameter_name >> config.input_movie_filepath;
     file >> parameter_name >> config.output_movie_filepath;
+    file >> parameter_name >> config.shaders_dir;
+    file >> parameter_name >> config.sprites_dir;
     file >> parameter_name >> config.output_movie_width;
     file >> parameter_name >> config.output_movie_height;
     file >> parameter_name >> config.output_movie_fps;
     file >> parameter_name >> config.film_margin_size;
     file >> parameter_name >> config.film_margin_step;
     file >> parameter_name >> config.film_margin_color[0] >> config.film_margin_color[1] >> config.film_margin_color[2];
-    file >> parameter_name >> config.shaders_dir;
+    file >> parameter_name >> config.artifacts_chance;
     file >> parameter_name >> config.enable_debug;
 
     return config;
@@ -65,8 +65,10 @@ Processor::Processor(const int argc, char* argv[])
 void Processor::Run()
 {
     auto input_movie = std::make_unique<vid_lib::video::VideoReader>(config_.input_movie_filepath);
-    auto output_movie = std::make_unique<vid_lib::video::VideoWriter>(config_.output_movie_filepath, config_.output_movie_width,
-                                             config_.output_movie_height, config_.output_movie_fps);
+    auto output_movie = std::make_unique<vid_lib::video::VideoWriter>(config_.output_movie_filepath,
+                                                                      config_.output_movie_width,
+                                                                      config_.output_movie_height,
+                                                                      config_.output_movie_fps);
 
     ComputeParameters(input_movie->GetFrameWidth(), input_movie->GetFrameHeight());
     MakeFramebuffers(input_movie->GetFrameWidth(), input_movie->GetFrameHeight());
@@ -127,12 +129,12 @@ void Processor::MakeTextures()
     input_image_texture_ = vid_lib::opengl::texture::Texture::MakeEmpty();
 
     glActiveTexture(GL_TEXTURE0 + 1);
-    font_texture_ = vid_lib::opengl::texture::Texture::MakeFromFile("../../../assets/sprites/font_48x80.png");
-    font_atlas_ = std::make_unique<vid_lib::sprite::Atlas>("../../../assets/sprites/font_48x80.txt");
+    font_texture_ = vid_lib::opengl::texture::Texture::MakeFromFile(config_.sprites_dir + "/font_48x80.png");
+    font_atlas_ = std::make_unique<vid_lib::sprite::Atlas>(config_.sprites_dir + "/font_48x80.txt");
 
     glActiveTexture(GL_TEXTURE0 + 2);
-    decals_texture_ = vid_lib::opengl::texture::Texture::MakeFromFile("../../../assets/sprites/decals_64x128.png");
-    decals_atlas_ = std::make_unique<vid_lib::sprite::Atlas>("../../../assets/sprites/decals_64x128.txt");
+    decals_texture_ = vid_lib::opengl::texture::Texture::MakeFromFile(config_.sprites_dir + "/decals_64x128.png");
+    decals_atlas_ = std::make_unique<vid_lib::sprite::Atlas>(config_.sprites_dir + "/decals_64x128.txt");
 }
 
 void Processor::MakeFramebuffers(const int width, const int height)
@@ -219,7 +221,7 @@ void Processor::RenderSecondPass()
 
 void Processor::RenderThirdPass()
 {
-    if (random_source_.GetNextFloat() < 0.03f)
+    if (random_source_.GetNextFloat() < config_.artifacts_chance)
     {
         program_1b_->SetUniform("u_fontImage", 2);
         program_1b_->SetUniform("u_spriteScreenSize",

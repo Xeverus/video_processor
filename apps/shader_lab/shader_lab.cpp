@@ -79,7 +79,7 @@ void ShaderLab::Run()
     vid_lib::opengl::debug::DebugMessenger::Enable();
 
     const auto program = vid_lib::opengl::shader::Program::MakeFromFiles(
-        "../../../Assets/Shaders/vhs_filter.vs", "../../../Assets/Shaders/vhs_filter.fs");
+        "../../../resources/shaders/vhs_filter.vs", "../../../resources/shaders/vhs_filter.fs");
     program->Use();
 
     GLuint vao;
@@ -89,7 +89,7 @@ void ShaderLab::Run()
     GLuint texture_id = 0;
     glGenTextures(1, &texture_id);
 
-    const auto video_path = "../../../Assets/Movies/original.MOV";
+    const auto video_path = "../../../resources/movies/original.MOV";
     vid_lib::video::VideoReader video(video_path);
 
     const auto new_width = 480;

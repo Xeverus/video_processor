@@ -1,5 +1,5 @@
 .idea
 build*
 cmake-build-*
-assets/movies
-assets/notes
+resources/movies
+resources/notes
