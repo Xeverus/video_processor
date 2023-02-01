@@ -6,7 +6,6 @@
 #include <vid_lib/math/film.h>
 
 #include <vid_lib/opengl/debug/debug_messenger.h>
-#include <vid_lib/opengl/texture/texture.h>
 
 #include "vid_lib/sprite/geometry_generator.h"
 
@@ -18,16 +17,24 @@ namespace
 
 Config LoadConfig(const int argc, char* argv[])
 {
-    return Config
-        {
-            "../../../Assets/Movies/original.MOV",
-            "../../../Assets/Movies/output.mp4",
-            480,
-            640,
-            30,
-            32,
-            4
-        };
+    std::ifstream file("config.txt");
+    if (!file.is_open())
+    {
+        throw std::runtime_error("failed to open config.txt file; please put it in exec folder");
+    }
+
+    Config config;
+    std::string parameter_name;
+
+    file >> parameter_name >> config.input_movie_filepath;
+    file >> parameter_name >> config.output_movie_filepath;
+    file >> parameter_name >> config.output_movie_width;
+    file >> parameter_name >> config.output_movie_height;
+    file >> parameter_name >> config.output_movie_fps;
+    file >> parameter_name >> config.film_margin_size;
+    file >> parameter_name >> config.film_margin_step;
+
+    return config;
 }
 
 }
